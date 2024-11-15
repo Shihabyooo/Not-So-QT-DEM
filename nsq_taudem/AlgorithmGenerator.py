@@ -9,7 +9,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterRasterLayer,
                        QgsProcessingParameterRasterDestination,
                        QgsProcessingParameterFeatureSource,
-                       QgsProcessingParameterFeatureSink,
+                       QgsProcessingParameterVectorDestination,
                        QgsProcessingParameterBoolean,
                        QgsProcessingParameterNumber,
                        QgsProcessingParameterFileDestination)
@@ -73,7 +73,7 @@ class Algorithm(QgsProcessingAlgorithm):
         elif (pType in ["v0", "v1", "v2"]): #point, line or poly vec
             vecType = int(param["type"][1]) #0 = point, 1 = line, 2 = poly
             if isOuput:
-                return QgsProcessingParameterFeatureSink(name = pIdName, description = pDispName)
+                return QgsProcessingParameterVectorDestination(name = pIdName, description = pDispName)
             else:
                 return QgsProcessingParameterFeatureSource(name = pIdName, description = pDispName, optional = param["isOptional"], types = [vecType])
         elif (pType == "i"): #int, only input

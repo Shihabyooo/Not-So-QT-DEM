@@ -3,7 +3,7 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=untitledTauDEMProvider
+name=Not-So-QT-DEM
 qgisMinimumVersion=3.0
 description=TauDEM 5.3 processing provider
 version=0.0.1
@@ -12,8 +12,8 @@ email=null@null.com
 
 about=An unofficial processing provider for Terrain Analysis Using Digital Elevation Models (TauDEM) version 5.3.x https://hydrology.usu.edu/taudem/taudem5/ Using TauDEM tools requires downloading and installing the package manually. Disclaimer: This plugin is not affiliated with the TauDEM project.
 
-tracker=null.nul
-repository=null.nul
+tracker=null
+repository=https://github.com/Shihabyooo/Not-So-QT-DEM
 # End of mandatory metadata
 
 # Recommended items:
@@ -25,7 +25,7 @@ hasProcessingProvider=yes
 # Tags are comma separated with spaces allowed
 tags=python,processing,taudem,hydrology,watershed analysis,terrain analysis
 
-homepage=http://homepageURL
+homepage=https://github.com/Shihabyooo/Not-So-QT-DEM
 category=Analysis
 icon=icon.png
 # experimental flag

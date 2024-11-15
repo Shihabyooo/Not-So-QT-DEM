@@ -1,6 +1,5 @@
 from processing.core.ProcessingConfig import ProcessingConfig, Setting
 from qgis.core import QgsProcessingProvider
-from .PitRemove import PitRemove
 from .helpers import Utilities, Tool
 from .AlgorithmGenerator import Algorithm
 
