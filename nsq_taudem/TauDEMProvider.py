@@ -1,5 +1,5 @@
 from processing.core.ProcessingConfig import ProcessingConfig, Setting
-from qgis.core import QgsProcessingProvider
+from qgis.core import QgsProcessingProvider, QgsApplication
 from .helpers import Utilities, Tool
 from .AlgorithmGenerator import Algorithm
 
@@ -11,8 +11,7 @@ class TauDEMProvider(QgsProcessingProvider):
 
     
     def load(self):
-        #TODO set icon.
-        #ProcessingConfig.settingIcons["TauDEM"] = self.icon() 
+        ProcessingConfig.settingIcons["TauDEM"] = self.icon() 
 
         ProcessingConfig.addSetting(Setting("TauDEM", #group
                                              "TAUDEM_PATH", #variable name
@@ -50,7 +49,7 @@ class TauDEMProvider(QgsProcessingProvider):
         return self.tr('TauDEM')
 
     def icon(self):
-        return QgsProcessingProvider.icon(self)
+        return Utilities.GetIcon()
 
     def longName(self):
         return self.name()

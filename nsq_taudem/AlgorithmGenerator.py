@@ -1,8 +1,8 @@
 from .helpers import Utilities, Tool
 
 from qgis.PyQt.QtCore import QCoreApplication
-from qgis.PyQt.QtGui import QIcon
 from qgis.core import (QgsProcessing,
+                       QgsApplication,
                        QgsMessageLog, #for testing only, TODO remove
                        QgsFeatureSink,
                        QgsProcessingException,
@@ -48,6 +48,9 @@ class Algorithm(QgsProcessingAlgorithm):
     
     def helpURL(self):
         return Utilities.GetToolHelpURL(self.tool.name)
+    
+    def icon(self):
+        return Utilities.GetIcon()
 
     def QGISParameter(self, param, isOuput : bool):
         #{"desc" : str = description of the input

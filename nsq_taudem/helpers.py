@@ -10,6 +10,7 @@ from qgis.core import (Qgis,
                        QgsApplication,
                        QgsMessageLog,
                        QgsProcessingFeedback)
+from qgis.PyQt.QtGui import QIcon
 
 #TODO create a utility that converts non-supported vector formats to shp
 #TauDEM docs state they accept all raster formats supported by GDAL, so we don't need to manipulte them(?)
@@ -61,8 +62,11 @@ class Utilities():
 
     @staticmethod
     def DescriptionFilePath():
-        return os.path.dirname(__file__)+"/TauDEMToolsDesc.csv"
-
+        return os.path.dirname(__file__) + "/TauDEMToolsDesc.csv"
+    
+    @staticmethod
+    def GetIcon():
+        return QIcon(os.path.dirname(__file__) + "/placeholder_icon.png")
         
     @staticmethod
     def SetPATH():
