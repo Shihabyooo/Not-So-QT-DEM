@@ -3,6 +3,7 @@ from .helpers import Utilities, Tool
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.core import (QgsProcessing,
+                       QgsMessageLog, #for testing only, TODO remove
                        QgsFeatureSink,
                        QgsProcessingException,
                        QgsProcessingAlgorithm,
@@ -12,7 +13,8 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterVectorDestination,
                        QgsProcessingParameterBoolean,
                        QgsProcessingParameterNumber,
-                       QgsProcessingParameterFileDestination)
+                       QgsProcessingParameterFileDestination,
+                       QgsProcessingParameterEnum)
 from qgis import processing
 
 class Algorithm(QgsProcessingAlgorithm):
@@ -35,7 +37,7 @@ class Algorithm(QgsProcessingAlgorithm):
     def group(self):
         return self.tr(self.tool.groupDisplayName)
     
-    def groupID(self):
+    def groupId(self):
         return self.tool.group
     
     def tags(self):
@@ -84,26 +86,46 @@ class Algorithm(QgsProcessingAlgorithm):
             return QgsProcessingParameterBoolean(name = pIdName, description = pDispName, optional = param["isOptional"], defaultValue = defVal) 
         elif (pType == "t"): #text file, only output
             return QgsProcessingParameterFileDestination(name = pIdName, description = pDispName)
+        elif(pType == "l"): #list, only input
+            #TODO consider setting default to first entry
+            return QgsProcessingParameterEnum(name = pIdName, description = pDispName, optional = param["isOptional"], allowMultiple = False, usesStaticStrings = True, options = param["list"].keys())
 
-    def EvaluateQGISInputParameter(self, param, paramList, context):
+    def EvaluateQGISInputParameter(self, param, paramList, context) -> list:
         pType = param["type"].lower()
         args = {"parameters" : paramList, "name" : param["option"][1:] , "context" : context}
 
+        evaluatedParam= ""
+
         if (pType in ["r", "v0", "v1", "v2"]):
-            return self.parameterAsLayer(**args)
+            evaluatedParam = self.parameterAsLayer(**args)
+            if (evaluatedParam is not None):
+                evaluatedParam = Utilities.WrapInQuotes(Utilities.GetLayerAbsolutePath(self.parameterAsLayer(**args)))
         elif (pType == "i"):
-            return self.parameterAsInt(**args)
+            evaluatedParam = self.parameterAsInt(**args)
         elif (pType == "f"):
-            return self.parameterAsDouble(**args)
-        elif (pType == "b"):
-            return self.parameterAsBool(**args)
+            evaluatedParam = self.parameterAsDouble(**args)
+        elif (pType == "b"): #bools are special case, they don't have value to input, but they indicate whether the option is included in the command or not
+            evaluatedParam = self.parameterAsBool(**args)
+            if (evaluatedParam):
+                return [param["option"]]
+            else:
+                return []
+        elif (pType == "l"): #The display name is typically different than command value. Former is key to the latter in dict in "default" entry of tool.inputParams.
+            evaluatedParam = self.parameterAsEnumString(**args)
+            if (evaluatedParam is not None):
+                evaluatedParam = param["list"][evaluatedParam]
+        
+        if (evaluatedParam is None):
+            return None
+
+        return [param["option"], evaluatedParam]
 
     def initAlgorithm(self, config=None):
         for input in self.tool.inputParams:
             self.addParameter(self.QGISParameter(input, False))
 
         #thread count is universal for all algorithms, not included int he descriptions
-        self.addParameter(QgsProcessingParameterNumber(name = "threadCount", description = "Threads to use (Requires MPI enabled)", optional = False, defaultValue = 4, type = QgsProcessingParameterNumber.Integer) )
+        self.addParameter(QgsProcessingParameterNumber(name = "PROCESS_COUNT", description = "Number of processes to use (Requires MPI enabled)", optional = False, defaultValue = 4, type = QgsProcessingParameterNumber.Integer) )
 
         for output in self.tool.outputParams:
             self.addParameter(self.QGISParameter(output, True))
@@ -121,19 +143,22 @@ class Algorithm(QgsProcessingAlgorithm):
         #loop over inputs and evluate them
         for input in self.tool.inputParams:
             evaluatedParam = self.EvaluateQGISInputParameter(input, parameters, context)
-            if (evaluatedParam is None):
+            #if (evaluatedParam is None):
+            if (input["type"] != "b" and evaluatedParam is None):
                 if (input["isOptional"]): #optional input can be none if the user elects not to use them. in this case just skip to next input
                     continue
                 else: #this is an error. required input can't be none unless something is wrong with fetching it.
                     feedback.pushInfo(f"Error evluating parameters for {input["desc"]}")#test
                     raise QgsProcessingException(self.invalidSourceError(parameters, input["option"][1:]))
             
-            if (input["type"] in ["r", "v0", "v1", "v2", "t"]):
-                command += [input["option"], Utilities.WrapInQuotes(Utilities.GetLayerAbsolutePath(evaluatedParam))]
-            elif (input["type"] in ["i", "f"]):
-                command += [input["option"], str(evaluatedParam)]
-            elif (input["type"] == "b" and evaluatedParam):
-                command.append(input["option"])
+            command += evaluatedParam
+
+            # if (input["type"] in ["r", "v0", "v1", "v2", "t"]):
+            #     command += [input["option"], Utilities.WrapInQuotes(Utilities.GetLayerAbsolutePath(evaluatedParam))]
+            # elif (input["type"] in ["i", "f"]):
+            #     command += [input["option"], str(evaluatedParam)]
+            # elif (input["type"] == "b" and evaluatedParam):
+            #     command.append(input["option"])
 
         #loop over outputs. These all evaluate to paths (strings), so no need for special method to handle them
         for output in self.tool.outputParams:
@@ -146,15 +171,15 @@ class Algorithm(QgsProcessingAlgorithm):
             if(output["type"] != "t"): #we only add rasters and vectors to qgis as a layer, not text
                 results[output["option"][1:]] = evaluatedParam
             
-        #handle thread count
-        threads = self.parameterAsInt(
+        #handle processes count
+        processCount = self.parameterAsInt(
             parameters,
-            "threadCount",
+            "PROCESS_COUNT",
             context
         )
 
         #ExecuteTauDemTool expects a single string with command and all args, not a list of strings.
         command = " ".join(command)
         feedback.pushInfo(f"Executing {command}")
-        Utilities.ExecuteTauDEMTool(command, threads, feedback)        
+        Utilities.ExecuteTauDEMTool(command, processCount, feedback)        
         return results

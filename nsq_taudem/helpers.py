@@ -22,7 +22,7 @@ class Tool():
         self.group = "" #ascii alphanumeric only, no special characters nor spaces.
         self.groupDisplayName = "" #displayed ing QGIS toolbox
         self.exec = "" #either the name of the TauDEM executable, or the python script handling the staging
-        self.inputParams = [] #list of dictionaries with detail of inputs for this tool. Keys expected: "desc", "option", "type", "isOptional", "default". See TauDEMToolsDesc.csv for details.
+        self.inputParams = [] #list of dictionaries with detail of inputs for this tool. Keys expected: "desc", "option", "type", "isOptional", "default", or "list". See TauDEMToolsDesc.csv for details.
         self.outputParams = [] #ditto for outputs. Only expects "desc", "option", and "type"
 
 class Utilities():
@@ -105,8 +105,8 @@ class Utilities():
                 tool.displayName, tool.groupDisplayName, tool.exec = next(descFileParser)[0:3]
                 tool.name = tool.displayName.replace(" ", "").lower()
                 tool.group = tool.groupDisplayName.replace(" ", "").lower()
-                
-                QgsMessageLog.logMessage(f"Parsed \"{tool.group}/{tool.name}\"", level=Qgis.Info)
+
+                QgsMessageLog.logMessage(f"Parsed \"{tool.group}/{tool.name}\"", level=Qgis.Info) #test
 
                 if (tool.type != 0): #we only need to process the next for non-staged tools
                     tools.append(tool)
@@ -114,6 +114,7 @@ class Utilities():
 
                 for input in range(0, inputCount):
                     row = next(descFileParser)
+                    #QgsMessageLog.logMessage(f"parameter: \"{row}\"", level=Qgis.Info) #test
                     params = {  "desc" : row[0],
                                 "option" : row[1],
                                 "type" : row[2],
@@ -124,6 +125,13 @@ class Utilities():
                             params["default"] = int(row[4])
                         elif params["type"] == "f":
                             params["default"] = float(row[4])
+                        elif params["type"] == "l":
+                            subList = row[4].split(";")
+                            subListDict = {}
+                            for entry in subList:
+                                pair = entry.split(":")
+                                subListDict[pair[0]] = pair[1]
+                            params["list"] = subListDict
 
                     tool.inputParams.append(params)
 
@@ -156,6 +164,8 @@ class Utilities():
     #TODO research this further.
     @staticmethod
     def GetLayerAbsolutePath(layer):
+        if (layer is None):
+            return ""
         return layer.source().split("|layername")[0]
     
     @staticmethod
