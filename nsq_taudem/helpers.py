@@ -103,14 +103,16 @@ class Utilities():
                 tool = Tool()
                 
                 tool.type = int(row[0])
-                inputCount = int(row[1])
-                outputCount = int(row[2])
+                
+                if (tool.type == 0): #input/output count is only useful (at this phase) for non-staged tools. Values may not be set in the desc file for staged tools, which would cause reading them to bug out.
+                    inputCount = int(row[1])
+                    outputCount = int(row[2])
                 
                 tool.displayName, tool.groupDisplayName, tool.exec = next(descFileParser)[0:3]
                 tool.name = tool.displayName.replace(" ", "").lower()
                 tool.group = tool.groupDisplayName.replace(" ", "").lower()
 
-                QgsMessageLog.logMessage(f"Parsed \"{tool.group}/{tool.name}\"", level=Qgis.Info) #test
+                QgsMessageLog.logMessage(f"Parsing \"{tool.group}/{tool.name}\"", level=Qgis.Info) #test
 
                 if (tool.type != 0): #we only need to process the next for non-staged tools
                     tools.append(tool)
@@ -118,7 +120,7 @@ class Utilities():
 
                 for input in range(0, inputCount):
                     row = next(descFileParser)
-                    #QgsMessageLog.logMessage(f"parameter: \"{row}\"", level=Qgis.Info) #test
+                    QgsMessageLog.logMessage(f"input parameter: \"{row}\"", level=Qgis.Info) #test
                     params = {  "desc" : row[0],
                                 "option" : row[1],
                                 "type" : row[2],
@@ -141,6 +143,7 @@ class Utilities():
 
                 for output in range (0, outputCount):
                     row = next(descFileParser)
+                    QgsMessageLog.logMessage(f"output parameter: \"{row}\"", level=Qgis.Info) #test
                     params = {  "desc" : row[0],
                                 "option" : row[1],
                                 "type" : row[2]}

@@ -105,8 +105,12 @@ class Algorithm(QgsProcessingAlgorithm):
                 evaluatedParam = Utilities.WrapInQuotes(Utilities.GetLayerAbsolutePath(self.parameterAsLayer(**args)))
         elif (pType == "i"):
             evaluatedParam = self.parameterAsInt(**args)
+            if (evaluatedParam is not None):
+                evaluatedParam = str(evaluatedParam)
         elif (pType == "f"):
             evaluatedParam = self.parameterAsDouble(**args)
+            if (evaluatedParam is not None):
+                evaluatedParam = str(evaluatedParam)
         elif (pType == "b"): #bools are special case, they don't have value to input, but they indicate whether the option is included in the command or not
             evaluatedParam = self.parameterAsBool(**args)
             if (evaluatedParam):
