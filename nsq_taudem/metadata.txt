@@ -6,13 +6,13 @@
 name=Not-So-QT-DEM
 qgisMinimumVersion=3.0
 description=TauDEM 5.3 processing provider
-version=0.0.1
+version=0.1
 author=Shihab E.
-email=null@null.com
+email=hh9on4rqo@mozmail.com
 
-about=An unofficial processing provider for Terrain Analysis Using Digital Elevation Models (TauDEM) version 5.3.x https://hydrology.usu.edu/taudem/taudem5/ Using TauDEM tools requires downloading and installing the package manually. Disclaimer: This plugin is not affiliated with the TauDEM project.
+about=A processing provider for Terrain Analysis Using Digital Elevation Models (TauDEM) version 5.3 (Windows only) <u>https://hydrology.usu.edu/taudem/taudem5/</u><br>This plugin requires downloading and installing the TauDEM tools manually <u>https://hydrology.usu.edu/taudem/taudem5/downloads.html</u>.<br>Executable paths on QGIS default to the defaults of the TauDEM installer. If you changed the install paths, make sure you do the same for this plugin from QGIS processing settings.<br><br><i>Disclaimer: This plugin is not affiliated with the TauDEM project.</i>
 
-tracker=null
+tracker=https://github.com/Shihabyooo/Not-So-QT-DEM/issues
 repository=https://github.com/Shihabyooo/Not-So-QT-DEM
 # End of mandatory metadata
 
@@ -29,7 +29,7 @@ homepage=https://github.com/Shihabyooo/Not-So-QT-DEM
 category=Analysis
 icon=icon.png
 # experimental flag
-experimental=False
+experimental=True
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False
