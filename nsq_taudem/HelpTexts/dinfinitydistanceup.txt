@@ -1,0 +1,9 @@
+#Help text for tool "D-Infinity Distance Up".
+#Lines starting with hash # are comments.
+#URL is a link to a help page with more information on usage of tools (to be implemented).
+URL
+#https://exampleURL.
+
+#TEXT is the html text that QGIS will render in the tool's GUI.
+TEXT
+#<b>Example tool description </b>.
