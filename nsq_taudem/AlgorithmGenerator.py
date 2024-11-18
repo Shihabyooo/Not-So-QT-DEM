@@ -44,10 +44,10 @@ class Algorithm(QgsProcessingAlgorithm):
         return ["taudem"]
     
     def shortHelpString(self):
-        return self.tool.helpText
+        return Utilities.GetToolExplanationText(self.tool.name)
     
     def helpURL(self):
-        return self.tool.helpURL
+        return Utilities.GetToolHelpURL(self.tool.name)
     
     def icon(self):
         return Utilities.GetIcon()
