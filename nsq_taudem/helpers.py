@@ -12,6 +12,7 @@ from qgis.core import (Qgis,
                        QgsProcessingFeedback)
 from qgis.PyQt.QtGui import QIcon
 
+#TODO unify your if/for argument styles (some have them inside brackets, others don't.)
 #TODO create a utility that converts non-supported vector formats to shp
 #TauDEM docs state they accept all raster formats supported by GDAL, so we don't need to manipulte them(?)
 
@@ -25,17 +26,19 @@ class Tool():
         self.exec = "" #either the name of the TauDEM executable, or the python script handling the staging
         self.inputParams = [] #list of dictionaries with detail of inputs for this tool. Keys expected: "desc", "option", "type", "isOptional", "default", or "list". See TauDEMToolsDesc.csv for details.
         self.outputParams = [] #ditto for outputs. Only expects "desc", "option", and "type"
+        self.helpText = ""
+        self.helpURL = ""
 
 class Utilities():
     DEFAULT_TAUDEM_PATH = "C:\\Program Files\\TauDEM\\TauDEM5Exe\\" #default for TauDEM 5.3 installer
     DEFAULT_MPI_PATH = "C:\\Program Files\\Microsoft MPI\\Bin\\" 
     
     @staticmethod
-    def IsValidDir(path):
+    def IsValidDir(path : str) -> bool:
         return os.path.isdir(path)
 
     @staticmethod
-    def FetchPath(settingName, default = ""): #for directories set in settings.
+    def FetchPath(settingName : str, default = "") -> str: #for directories set in settings.
         path = ProcessingConfig.getSetting(settingName)
         
         if path is None or not Utilities.IsValidDir(path):
@@ -49,27 +52,31 @@ class Utilities():
         return path
 
     @staticmethod
-    def TauDEMPath():
+    def TauDEMPath() -> str:
         return Utilities.FetchPath("TAUDEM_PATH", Utilities.DEFAULT_TAUDEM_PATH)
     
     @staticmethod
-    def MPIPath():
+    def MPIPath() -> str:
        return Utilities.FetchPath("MPI_PATH", Utilities.DEFAULT_MPI_PATH)
     
-    def GDALPath(): #TODO figure out how to point to the GDAL libs QGIS ships with/uses (although it's probably better to use what TauDEM uses). Alternatively,\
+    def GDALPath() -> str: #TODO figure out how to point to the GDAL libs QGIS ships with/uses (although it's probably better to use what TauDEM uses). Alternatively,\
         #implement similar to TauDEMPath() and MPIPath() with a DEFAULT_GDAL_PATH const, and expose setting in QGIS config menu.
         return "C:\\Program Files\\GDAL"
 
     @staticmethod
-    def DescriptionFilePath():
+    def DescriptionFilePath() -> str:
         return os.path.dirname(__file__) + "/TauDEMToolsDesc.csv"
     
+    @staticmethod
+    def HelpTextFilePath(toolName : str) ->str:
+        return os.path.dirname(__file__) + "/HelpTexts/" + toolName + ".txt"
+
     @staticmethod
     def GetIcon():
         return QIcon(os.path.dirname(__file__) + "/placeholder_icon.png")
         
     @staticmethod
-    def SetPATH():
+    def SetPATH() -> None:
         #add only what we need. Shouldn't be serious requirment for actual use, but multiple reloading and unloading of this plugin (like what happens in \
         #testing or enabling/disabling via plugins dialogue) with the "naive" implementation will end up with duplicates in PATH var for the QGIS session. 
         #Native implementation:
@@ -83,9 +90,25 @@ class Utilities():
             if requiredPath not in pathVars:
                 os.environ["PATH"] += requiredPath + ";"
         
+    @staticmethod
+    def SanitizeString(string : str) -> str: #returns a string with only lowercase, alphanumeric ASCII characters, no spaces, no special chars
+        legalCharset = "abcdefghijklmnopqrstuvwxyz123456789"
+        sanitizedString = ""
+        
+        loweredString = string.lower()
+
+        for letter in loweredString:
+            if letter in legalCharset:
+                sanitizedString += letter
+
+        if (len(sanitizedString) < 1):
+            QgsMessageLog.logMessage(f"Warning: When sanitizeing string {string}, result was an empty string", level=Qgis.Warning)
+
+        return sanitizedString
+
 
     @staticmethod
-    def ParseToolsDesc():
+    def ParseToolsDesc() -> list[Tool]:
         tools = []
         
         QgsMessageLog.logMessage(f"Parsing tools description file at \"{Utilities.DescriptionFilePath()}\"", level=Qgis.Info)
@@ -109,8 +132,10 @@ class Utilities():
                     outputCount = int(row[2])
                 
                 tool.displayName, tool.groupDisplayName, tool.exec = next(descFileParser)[0:3]
-                tool.name = tool.displayName.replace(" ", "").lower()
-                tool.group = tool.groupDisplayName.replace(" ", "").lower()
+                #tool.name = tool.displayName.replace(" ", "").lower()
+                tool.name = Utilities.SanitizeString(tool.displayName)
+                #tool.group = tool.groupDisplayName.replace(" ", "").lower()
+                tool.group = Utilities.SanitizeString(tool.groupDisplayName)
 
                 QgsMessageLog.logMessage(f"Parsing \"{tool.group}/{tool.name}\"", level=Qgis.Info) #test
 
@@ -120,7 +145,7 @@ class Utilities():
 
                 for input in range(0, inputCount):
                     row = next(descFileParser)
-                    QgsMessageLog.logMessage(f"input parameter: \"{row}\"", level=Qgis.Info) #test
+                    #QgsMessageLog.logMessage(f"input parameter: \"{row}\"", level=Qgis.Info) #test
                     params = {  "desc" : row[0],
                                 "option" : row[1],
                                 "type" : row[2],
@@ -143,11 +168,16 @@ class Utilities():
 
                 for output in range (0, outputCount):
                     row = next(descFileParser)
-                    QgsMessageLog.logMessage(f"output parameter: \"{row}\"", level=Qgis.Info) #test
+                    #QgsMessageLog.logMessage(f"output parameter: \"{row}\"", level=Qgis.Info) #test
                     params = {  "desc" : row[0],
                                 "option" : row[1],
                                 "type" : row[2]}
                     tool.outputParams.append(params)
+
+                #parse the tool's help text and URL
+                helpTextURL = Utilities.ParseToolHelpTextURL(tool.name)
+                tool.helpURL = helpTextURL["url"]
+                tool.helpText = helpTextURL["text"]
 
                 tools.append(tool)
                 
@@ -158,11 +188,26 @@ class Utilities():
         return []
 
     @staticmethod
-    def GetToolExplanationText(toolName : str): #TODO implement
-        return ""
+    def ParseToolHelpTextURL(toolName : str) -> dict[str, str]: 
+        result = {"url" : "", "text" : ""}
 
-    def GetToolHelpURL(toolName : str): #TODO implement
-        return ""
+        try:
+            helpTextFile = open (Utilities.HelpTextFilePath(toolName), "r")
+        except Exception as exception:
+            QgsMessageLog.logMessage(f"Failed to open help text file \"{Utilities.HelpTextFilePath(toolName)}\"", Qgis.Warning)
+            QgsMessageLog.logMessage(exception, Qgis.Warning)
+            return result
+        
+        for line in helpTextFile:
+            if line[0] == "#": 
+                continue
+            sanitzedLine = line.strip().lower()
+            if sanitzedLine in ["url", "text"]:
+                for line in helpTextFile:
+                    if line[0] != "#":
+                        result[sanitzedLine] = line
+                        break
+        return result
 
     #Supposedly, results for layer.source() may contain stuff other than the path (i.e. layer name, username, password, etc) This method 
     #sanitizes it and returns only the path. 
