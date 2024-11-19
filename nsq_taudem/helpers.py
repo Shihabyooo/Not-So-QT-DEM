@@ -42,7 +42,7 @@ class Utilities():
         path = ProcessingConfig.getSetting(settingName)
         
         if path is None or not Utilities.IsValidDir(path):
-            QgsMessageLog.logMessage(f"{settingName} is not set to a valid path in provider settings. Currently set path: \"{path}\". Will attempt to use default: \"{default}\"", "Processing", Qgis.Warning)
+            QgsMessageLog.logMessage(f"{settingName} is not set to a valid path in provider settings. Currently set path: \"{path}\". Will attempt to use default: \"{default}\"", level=Qgis.Warning)
             return default
         
         #add a trailing slash here
@@ -70,10 +70,14 @@ class Utilities():
     @staticmethod
     def HelpTextFilePath(toolName : str) ->str:
         return os.path.dirname(__file__) + "/HelpTexts/" + toolName + ".txt"
+    
+    @staticmethod
+    def ImageDirPath()->str:
+        return os.path.dirname(__file__) + "/img/"
 
     @staticmethod
     def GetIcon():
-        return QIcon(os.path.dirname(__file__) + "/placeholder_icon.png")
+        return QIcon(Utilities.ImageDirPath() + "placeholder_icon.png")
         
     @staticmethod
     def SetPATH() -> None:
@@ -136,8 +140,12 @@ class Utilities():
                 tool.name = Utilities.SanitizeString(tool.displayName)
                 #tool.group = tool.groupDisplayName.replace(" ", "").lower()
                 tool.group = Utilities.SanitizeString(tool.groupDisplayName)
-
-                QgsMessageLog.logMessage(f"Parsing \"{tool.group}/{tool.name}\"", level=Qgis.Info) #test
+                #QgsMessageLog.logMessage(f"Parsing \"{tool.group}/{tool.name}\"", level=Qgis.Info) #test
+                
+                #parse the tool's help text and URL
+                helpTextURL = Utilities.ParseToolHelpTextURL(tool.name)
+                tool.helpURL = helpTextURL["url"]
+                tool.helpText = helpTextURL["text"]
 
                 if (tool.type != 0): #we only need to process the next for non-staged tools
                     tools.append(tool)
@@ -174,17 +182,12 @@ class Utilities():
                                 "type" : row[2]}
                     tool.outputParams.append(params)
 
-                #parse the tool's help text and URL
-                helpTextURL = Utilities.ParseToolHelpTextURL(tool.name)
-                tool.helpURL = helpTextURL["url"]
-                tool.helpText = helpTextURL["text"]
-
                 tools.append(tool)
                 
             QgsMessageLog.logMessage(f"Parsed {len(tools)} tools", level=Qgis.Success)
             return tools
         
-        QgsMessageLog.logMessage("Failed to parse TauDEM tools file (Error opening file)", Qgis.Warning)
+        QgsMessageLog.logMessage("Failed to parse TauDEM tools file (Error opening file)", level=Qgis.Warning)
         return []
 
     @staticmethod
@@ -194,8 +197,8 @@ class Utilities():
         try:
             helpTextFile = open (Utilities.HelpTextFilePath(toolName), "r")
         except Exception as exception:
-            QgsMessageLog.logMessage(f"Failed to open help text file \"{Utilities.HelpTextFilePath(toolName)}\"", Qgis.Warning)
-            QgsMessageLog.logMessage(exception, Qgis.Warning)
+            QgsMessageLog.logMessage(f"Failed to open help text file \"{Utilities.HelpTextFilePath(toolName)}\"", level=Qgis.Warning)
+            QgsMessageLog.logMessage(f"Exception thrown: {str(exception)}", level=Qgis.Warning)
             return result
         
         for line in helpTextFile:
@@ -203,10 +206,17 @@ class Utilities():
                 continue
             sanitzedLine = line.strip().lower()
             if sanitzedLine in ["url", "text"]:
+                value = ""
                 for line in helpTextFile:
                     if line[0] != "#":
-                        result[sanitzedLine] = line
-                        break
+                        if not line.strip().lower() in ["end text", "end url"]:
+                            value += line
+                        else:
+                            break
+                result[sanitzedLine] = value.strip("\n")
+
+        result["text"] = result["text"].replace("<imgdir>", Utilities.ImageDirPath())
+        #QgsMessageLog.logMessage(f"help: {result}") #test
         return result
 
     #Supposedly, results for layer.source() may contain stuff other than the path (i.e. layer name, username, password, etc) This method 

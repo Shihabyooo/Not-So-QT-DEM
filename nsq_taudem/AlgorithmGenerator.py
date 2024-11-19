@@ -46,7 +46,7 @@ class Algorithm(QgsProcessingAlgorithm):
     def shortHelpString(self):
         return self.tool.helpText
     
-    def helpURL(self):
+    def helpUrl(self):
         return self.tool.helpURL
     
     def icon(self):
