@@ -165,7 +165,7 @@ class Utilities():
                         elif params["type"] == "f":
                             params["default"] = float(row[4])
                         elif params["type"] == "l":
-                            subList = row[4].split(";")
+                            subList = row[4].split("|")
                             subListDict = {}
                             for entry in subList:
                                 pair = entry.split(":")
