@@ -1,9 +1,8 @@
 #Help text for tool "Topographic Wetness Index".
-#Lines starting with hash # are comments.
-#URL is a link to a help page with more information on usage of tools (to be implemented).
 URL
-#https://exampleURL.
+https://hydrology.usu.edu/taudem/taudem5/help53/topographicwetnessindex.html
+END URL
 
-#TEXT is the html text that QGIS will render in the tool's GUI.
 TEXT
-#<b>Example tool description </b>.
+<p>Calculates the ratio of the natural log of the specific catchment area (contributing area) to slope, ln(a/S), or ln(a/tan (beta)). This provides an indication of depth to water table. No data values occur in locations where slope is 0 (flat).</p>
+END TEXT

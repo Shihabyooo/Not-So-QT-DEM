@@ -1,0 +1,9 @@
+#Help text for tool "Stability Index".
+URL
+https://hydrology.usu.edu/taudem/taudem5/help53/StabilityIndex.html
+END URL
+
+
+TEXT
+<p>Computes terrain stability index (SI) using the SINMAP method based on the infinite plain slope stability model. SI values are written to the output raster file. Refer to documentation on SINMAP web page for an understanding of what this program does. Refer also to documentation on the GRAIP web page for use of this including the impacts of roads on drainage that may alter terrain stability.</p>
+END TEXT

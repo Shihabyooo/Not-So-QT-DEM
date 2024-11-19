@@ -1,9 +1,8 @@
 #Help text for tool "D-Infinity Distance Down".
-#Lines starting with hash # are comments.
-#URL is a link to a help page with more information on usage of tools (to be implemented).
 URL
-#https://exampleURL.
+https://hydrology.usu.edu/taudem/taudem5/help53/dinfinitydistancedown.html
+END URL
 
-#TEXT is the html text that QGIS will render in the tool's GUI.
 TEXT
-#<b>Example tool description </b>.
+<p>Calculates the distance downslope to a stream using the D-infinity flow model. The D-infinity flow model is a multiple flow direction model, because the outflow from each grid cell is proportioned between up to 2 downslope grid cells. As such, the distance from any grid cell to a stream is not uniquely defined. Flow that originates at a particular grid cell may enter the stream at a number of different cells. The statistical method may be selected as the longest, shortest or weighted average of the flow path distance to the stream. Also one of several ways of measuring distance may be selected: the total straight line path (Pythagoras), the horizontal component of the straight line path, the vertical component of the straight line path, or the total surface flow path.</p>
+END TEXT

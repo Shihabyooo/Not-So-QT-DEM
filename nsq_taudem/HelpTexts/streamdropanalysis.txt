@@ -1,9 +1,8 @@
 #Help text for tool "Stream Drop Analysis".
-#Lines starting with hash # are comments.
-#URL is a link to a help page with more information on usage of tools (to be implemented).
 URL
-#https://exampleURL.
+https://hydrology.usu.edu/taudem/taudem5/help53/streamdropanalysis.html
+END URL
 
-#TEXT is the html text that QGIS will render in the tool's GUI.
 TEXT
-#<b>Example tool description </b>.
+<p>Applies a series of thresholds (determined from the input parameters) to the input accumulated stream source grid (*ssa) grid and outputs the results in the *drp.txt file the stream drop statistics table. This function is designed to aid in the determination of a geomorphologically objective threshold to be used to delineate streams. Drop Analysis attempts to select the right threshold automatically by evaluating a stream network for a range of thresholds and examining the constant drop property of the resulting Strahler streams. Basically it asks the question: Is the mean stream drop for first order streams statistically different from the mean stream drop for higher order streams, using a T-Test. Stream drop is the difference in elevation from the beginning to the end of a stream defined as the sequence of links of the same stream order. If the T test shows a significant difference then the stream network does not obey this "law" so a larger threshold needs to be chosen. The smallest threshold for which the T test does not show a significant difference gives the highest resolution stream network that obeys the constant stream drop "law" from geomorphology, and is the threshold chosen for the "objective" or automatic mapping of streams from the DEM. This function can be used in the development of stream network rasters, where the exact watershed characteristic(s) that were accumulated in the accumulated stream source grid vary based on the method being used to determine the stream network raster.</p>
+END TEXT

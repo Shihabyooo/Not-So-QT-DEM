@@ -1,9 +1,9 @@
 #Help text for tool "D8 Flow Directions".
-#Lines starting with hash # are comments.
-#URL is a link to a help page with more information on usage of tools (to be implemented).
 URL
-#https://exampleURL.
+https://hydrology.usu.edu/taudem/taudem5/help53/D8FlowDirections.html
+END URL
 
-#TEXT is the html text that QGIS will render in the tool's GUI.
+
 TEXT
-#<b>Example tool description </b>.
+<p>Creates 2 grids. The first contains the flow direction from each grid cell to one of its adjacent or diagonal neighbors, calculated using the direction of steepest descent. The second contain the slope, as evaluated in the direction of steepest descent, and is reported as drop/distance, i.e. tan of the angle. Flow direction is reported as "no data" for any grid cell adjacent to the edge of the DEM domain, or adjacent to a "no data" value in the DEM. In flat areas, flow directions are assigned away from higher ground and towards lower ground using the method of Garbrecht and Martz (1997). The D8 flow direction algorithm may be applied to a DEM that has not had its pits filled, but it will then result in "no data" values for flow direction and slope at the lowest point of each pit.</p>
+END TEXT

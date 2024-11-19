@@ -1,9 +1,8 @@
 #Help text for tool "D-Infinity Concentration Limited Accumulation".
-#Lines starting with hash # are comments.
-#URL is a link to a help page with more information on usage of tools (to be implemented).
 URL
-#https://exampleURL.
+https://hydrology.usu.edu/taudem/taudem5/help53/dinfinityconcentrationlimitedaccumulation.html
+END URL
 
-#TEXT is the html text that QGIS will render in the tool's GUI.
 TEXT
-#<b>Example tool description </b>.
+<p>This function applies to the situation where an unlimited supply of a substance is loaded into flow at a concentration or solubility threshold Csol over a region indicated by an indicator grid (dg). It a grid of the concentration of a substance at each location in the domain, where the supply of substance from a supply area is loaded into the flow at a concentration or solubility threshold. The flow is first calculated as a D-infinity weighted contributing area of an input Effective Runoff Weight Grid (notionally excess precipitation). The concentation of substance over the supply area (indicator grid) is at the concentration threshold. As the substance moves downslope with the D-infinity flow field, it is subject to first order decay in moving from cell to cell as well as dilution due to changes in flow. The decay multiplier grid gives the fractional (first order) reduction in quantity in moving from grid cell x to the next downslope cell. If the input outlets is used, the tool only evaluates the part of the domain that contributes flow to the locations given by the outlets. This is useful for a tracking a contaminant or compound from an area with unlimited supply of that compound that is loaded into a flow at a concentration or solubility threshold over a zone and flow from the zone may be subject to decay or attenuation.</p>
+END TEXT

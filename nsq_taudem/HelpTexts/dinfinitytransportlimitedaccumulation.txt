@@ -1,9 +1,8 @@
 #Help text for tool "D-Infinity Transport Limited Accumulation".
-#Lines starting with hash # are comments.
-#URL is a link to a help page with more information on usage of tools (to be implemented).
 URL
-#https://exampleURL.
+https://hydrology.usu.edu/taudem/taudem5/help53/dinfinitytransportlimitedaccumulation.html
+END URL
 
-#TEXT is the html text that QGIS will render in the tool's GUI.
 TEXT
-#<b>Example tool description </b>.
+<p>This function is designed to calculate the transport and deposition of a substance (e.g. sediment) that may be limited by both supply and the capacity of the flow field to transport it. This function accumulates substance flux (e.g. sediment transport) subject to the rule that transport out of any grid cell is the minimum between supply and transport capacity, Tcap. The total supply at a grid cell is calculated as the sum of the transport in from upslope grid cells, Tin, plus the local supply contribution, E (e.g. erosion). This function also outputs deposition, D, calculated as total supply minus actual transport.</p>
+END TEXT

@@ -1,9 +1,8 @@
 #Help text for tool "Gage Watershed".
-#Lines starting with hash # are comments.
-#URL is a link to a help page with more information on usage of tools (to be implemented).
 URL
-#https://exampleURL.
+https://hydrology.usu.edu/taudem/taudem5/help53/gagewatershed.html
+END URL
 
-#TEXT is the html text that QGIS will render in the tool's GUI.
 TEXT
-#<b>Example tool description </b>.
+<p>Calculates Gage watersheds grid. Each grid cell is labeled with the identifier (from column id) of the gage to which it drains directly without passing through any other gages.</p>
+END TEXT

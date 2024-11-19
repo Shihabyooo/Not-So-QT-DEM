@@ -1,9 +1,8 @@
 #Help text for tool "Length Area Stream Source".
-#Lines starting with hash # are comments.
-#URL is a link to a help page with more information on usage of tools (to be implemented).
 URL
-#https://exampleURL.
+https://hydrology.usu.edu/taudem/taudem5/help53/lengthareastreamsource.html
+END URL
 
-#TEXT is the html text that QGIS will render in the tool's GUI.
 TEXT
-#<b>Example tool description </b>.
+<p>Creates an indicator grid (1,0) that evaluates A &gt;= (M)(L^y) based on upslope path length, D8 contributing area grid inputs, and parameters M and y. This grid indicates likely stream source grid cells. This is an experimental method with theoretical basis in Hack's law which states that for streams L ~ A^0.6. However for hillslopes with parallel flow L ~ A. So a transition from hillslopes to streams may be represented by L ~ A^0.8 suggesting identifying grid cells as stream cells if A &gt; M (L^(1/0.8)).</p>
+END TEXT

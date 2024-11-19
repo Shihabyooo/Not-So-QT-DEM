@@ -1,9 +1,8 @@
 #Help text for tool "Slope Area Combination".
-#Lines starting with hash # are comments.
-#URL is a link to a help page with more information on usage of tools (to be implemented).
 URL
-#https://exampleURL.
+https://hydrology.usu.edu/taudem/taudem5/help53/slopeareacombination.html
+END URL
 
-#TEXT is the html text that QGIS will render in the tool's GUI.
 TEXT
-#<b>Example tool description </b>.
+<p>Creates a grid of slope-area values = (S^m)(A^n) based on slope and specific catchment area grid inputs, and parameters m and n. This tool is intended for use as part of the slope-area stream raster delineation method.</p>
+END TEXT

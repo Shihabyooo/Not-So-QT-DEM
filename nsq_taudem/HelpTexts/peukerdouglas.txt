@@ -1,0 +1,8 @@
+#Help text for tool "Peuker Douglas".
+URL
+https://hydrology.usu.edu/taudem/taudem5/help53/peukerdouglas.html
+END URL
+
+TEXT
+<p>Creates an indicator grid (1,0) of upward curved grid cells according to the Peuker and Douglas algorithm.</p><p>With this tool, the DEM is first smoothed by a kernel with weights at the center, sides, and diagonals. The Peuker and Douglas (1975) method (also explained in Band, 1986), is then used to identify upwardly curving grid cells. This technique flags the entire grid, then examines in a single pass each quadrant of 4 grid cells, and unflags the highest. The remaining flagged cells are deemed 'upwardly curved', and when viewed, resemble a channel network. This proto-channel network generally lacks connectivity and requires thinning, issues that were discussed in detail by Band (1986).</p><p>Band, L. E., (1986), "Topographic partition of watersheds with digital elevation models," Water Resources Research, 22(1): 15-24. </p><p>Peuker, T. K. and D. H. Douglas, (1975), "Detection of surface-specific points by local parallel processing of discrete terrain elevation data," Comput. Graphics Image Process., 4: 375-387. </p>
+END TEXT

@@ -1,0 +1,8 @@
+#Help text for tool "Watershed Grid To Shapefile".
+URL
+https://hydrology.usu.edu/taudem/taudem5/help53/WatershedGridToShapefile.html
+END URL
+
+TEXT
+<p>Translates the grid watershed representation into a polygon shapefile. Each shape in the Watershed Shapefile is assigned an identifier the same as the value identifier in the grid from which it was created, that in turn maps back to WSNO in the Stream Shapefile.</p>
+END TEXT

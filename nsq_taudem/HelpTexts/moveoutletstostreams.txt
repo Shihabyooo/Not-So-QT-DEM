@@ -1,9 +1,8 @@
 #Help text for tool "Move Outlets To Streams".
-#Lines starting with hash # are comments.
-#URL is a link to a help page with more information on usage of tools (to be implemented).
 URL
-#https://exampleURL.
+https://hydrology.usu.edu/taudem/taudem5/help53/moveoutletstostreams.html
+END URL
 
-#TEXT is the html text that QGIS will render in the tool's GUI.
 TEXT
-#<b>Example tool description </b>.
+<p>Moves outlet points that are not aligned with a stream cell from a stream raster grid, downslope along the D8 flow direction until a stream raster cell is encountered, the max_dist number of grid cells are examined, or the flow path exits the domain (i.e. a "no data" value is encountered for the D8 flow direction). The output file is a new point OGR file where each point has been moved to coincide with the stream raster grid, if possible. A field 'dist_moved' is added to the new outlets file to indicate the changes made to each point. Points that are already on a stream cell are not moved and their 'dist_moved' field is assigned a value 0. Points that are initially not on a stream cell are moved by sliding them downslope along the D8 flow direction until one of the following occurs: a.) A stream raster grid cell is encountered before traversing the max_dist number of grid cells. In which case, the point is moved and the 'dist_moved' field is assigned a value indicating how many grid cells the point was moved. b.) More than the max_number of grid cells are traversed, or c) the traversal ends up going out of the domain (i.e., a "no data" D8 flow direction value is encountered). In which case, the point is not moved and the 'dist_moved' field is assigned a value of -1.</p>
+END TEXT

@@ -1,9 +1,8 @@
 #Help text for tool "Stream Definition By Threshold".
-#Lines starting with hash # are comments.
-#URL is a link to a help page with more information on usage of tools (to be implemented).
 URL
-#https://exampleURL.
+https://hydrology.usu.edu/taudem/taudem5/help53/streamdefinitionbythreshold.html
+END URL
 
-#TEXT is the html text that QGIS will render in the tool's GUI.
 TEXT
-#<b>Example tool description </b>.
+<p>Operates on any grid and outputs an indicator (1,0) grid identifing cells with input values &gt;= the threshold value. The standard use is to use an accumulated source area grid to as the input grid to generate a stream raster grid as the output. If you use the optional input mask grid, it limits the domain being evaluated to cells with mask values &gt;= 0 . When you use a D-infinity contributing area grid (*sca) as the mask grid, it functions as an edge contamination mask. The threshold logic is: src = ((ssa &gt;= thresh) &amp; (mask &gt;=0)) ? 1:0 .</p>
+END TEXT

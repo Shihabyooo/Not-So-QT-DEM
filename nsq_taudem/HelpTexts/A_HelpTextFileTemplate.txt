@@ -1,0 +1,10 @@
+#Lines starting with hash # are comments.
+#URL is a link to a help page with more information on usage of tools. Single line. Must be followed with a line with END URL
+URL
+#https://exampleURL.
+END URL
+
+#TEXT is the html text that QGIS will render in the tool's GUI. Can be multiline, must be followed with a line with END TEXT
+TEXT
+#<b>Example tool description </b>.
+END TEXT

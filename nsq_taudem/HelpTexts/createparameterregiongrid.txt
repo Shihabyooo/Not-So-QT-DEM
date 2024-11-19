@@ -1,0 +1,10 @@
+#Help text for tool "Create Parameter Region Grid".
+URL
+https://hydrology.usu.edu/taudem/taudem5/help53/CreateParameterRegionGrid.html
+END URL
+
+
+TEXT
+<p>The SINMAP stability index tool requires parameters to be input using a grid that is the same dimensions as the digital elevation model (DEM) with integer values that reference into rows of a parameter table. This tool generates both the grid and the parameter table.</p>
+<p>There are options to (1) create a single region that has the same parameters for the whole domain, (2) create regions based on an input grid and (3) create regions based on an input feature class. In the latter two cases the inputs are resampled to the scale of the DEM.</p>
+END TEXT

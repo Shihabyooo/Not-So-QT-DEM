@@ -1,0 +1,8 @@
+#Help text for tool "Slope Area Stream Definition".
+URL
+https://hydrology.usu.edu/taudem/taudem5/help53/slopeareastreamdefinition.html
+END URL
+
+TEXT
+<p>This tool combines the function of the following tools: "Slope Area Combination," "D8 Extreme Upslope Value," "Stream Drop Analysis," and "Stream Definition by Threshold." It creates a grid where stream cells have a value of 1 and non-stream cells have a value of 0 using the area and slope threshold method to determine the location of the streams. With this method, streams are defined as beginning where an expression meets or exceeds a threshold (T). The expression is calculated by taking the slope (S) raised to an exponent (m) and then multiplied by the specific catchment area (a) raised to an exponent (n), i.e, (S^m)(a^n) &gt;= T. Once a stream begins, it continues downslope, from there. This method was suggested by Montgomery and Dietrich (1992). (They used the slope exponent (m) of 2, area exponent (n) of 1, and a threshold (T) of 200 m^2 in their study). Please note that specific catchment area (a) is the contributing area per unit width (cell size) and has units of length. If specific catchment area is used for A, the units are contributing area per unit width (cell size), usually in m, so if the cell size is 15 m, a T equivalent to 200 m^2 is 200/15=13.3.</p>
+END TEXT
