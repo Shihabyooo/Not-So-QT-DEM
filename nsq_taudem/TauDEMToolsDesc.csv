@@ -231,6 +231,6 @@ Outlets,-o,v0,0,
 Minimum threshold value,-par,f,0,5
 maximum threshold value,,f,0,500
 Number of threshold values,,i,0,10
-Use logarithmic spacing for threshold values,,b,0,1
-Drop analysis text file,,t,,
+Type of threshold step to be used in drop analysis,,l,0,Logarithmic:0|Arithmetic:1
+Drop analysis text file,-drp,t,,
 END,,,,
