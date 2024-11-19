@@ -51,6 +51,9 @@ class Algorithm(QgsProcessingAlgorithm):
     
     def icon(self):
         return Utilities.GetIcon()
+    
+    def svgIconPath(self):
+        return Utilities.GetIconSVGPath()
 
     def QGISParameter(self, param, isOuput : bool):
         #{"desc" : str = description of the input
@@ -63,9 +66,16 @@ class Algorithm(QgsProcessingAlgorithm):
 
         pType = param["type"].lower()
         pDispName = self.tr(param["desc"])
-        #pIdName = pDispName.replace(" ","")
+        
         #param["option"] is unique for each input/output for each tool. We can strip the leading hyphen and use it as ID.
-        pIdName = param["option"][1:]
+        #rationale: QGIS tool tip when hovering on input shows its ID.
+
+        pIdName = ""
+        #Some input don't have their own options. Multiple ones may use one option, which is defined for the first input in the description file. Handle them here
+        if (param["option"] != ""):
+            pIdName = param["option"][1:]
+        else:
+            pIdName = Utilities.SanitizeString(param["desc"])
 
         defVal = None if "default" not in param else param["default"]
 

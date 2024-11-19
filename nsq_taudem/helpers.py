@@ -5,14 +5,16 @@ import subprocess
 
 from processing.core.ProcessingConfig import ProcessingConfig
 #from processing.tools.system import isWindows, isMac, userFolder
-#from qgis.PyQt.QtCore import QCoreApplication
+
 from qgis.core import (Qgis,
                        QgsApplication,
                        QgsMessageLog,
                        QgsProcessingFeedback)
 from qgis.PyQt.QtGui import QIcon
 
+#TODO implement Windows/Linux/Mac distinction (at least to give clearer message on why things aren't working, in the latter two's cases)
 #TODO unify your if/for argument styles (some have them inside brackets, others don't.)
+#TODO unify path slash convention
 #TODO create a utility that converts non-supported vector formats to shp
 #TauDEM docs state they accept all raster formats supported by GDAL, so we don't need to manipulte them(?)
 
@@ -26,8 +28,8 @@ class Tool():
         self.exec = "" #either the name of the TauDEM executable, or the python script handling the staging
         self.inputParams = [] #list of dictionaries with detail of inputs for this tool. Keys expected: "desc", "option", "type", "isOptional", "default", or "list". See TauDEMToolsDesc.csv for details.
         self.outputParams = [] #ditto for outputs. Only expects "desc", "option", and "type"
-        self.helpText = ""
-        self.helpURL = ""
+        self.helpText = "" #An HTML text to be shown in the tool's dialogue.
+        self.helpURL = "" #URL to be opened when user clicks on "help" button on the tool's dialogue.
 
 class Utilities():
     DEFAULT_TAUDEM_PATH = "C:\\Program Files\\TauDEM\\TauDEM5Exe\\" #default for TauDEM 5.3 installer
@@ -68,7 +70,7 @@ class Utilities():
         return os.path.dirname(__file__) + "/TauDEMToolsDesc.csv"
     
     @staticmethod
-    def HelpTextFilePath(toolName : str) ->str:
+    def HelpTextFilePath(toolName : str) -> str:
         return os.path.dirname(__file__) + "/HelpTexts/" + toolName + ".txt"
     
     @staticmethod
@@ -76,14 +78,18 @@ class Utilities():
         return os.path.dirname(__file__) + "/img/"
 
     @staticmethod
-    def GetIcon():
-        return QIcon(Utilities.ImageDirPath() + "placeholder_icon.png")
+    def GetIcon() -> QIcon:
+        return QIcon(Utilities.ImageDirPath() + "logo.png")
+    
+    @staticmethod
+    def GetIconSVGPath() -> str:
+        return Utilities.ImageDirPath() + "logo.svg"
         
     @staticmethod
     def SetPATH() -> None:
-        #add only what we need. Shouldn't be serious requirment for actual use, but multiple reloading and unloading of this plugin (like what happens in \
+        #add only what's missing. Shouldn't be serious requirment for actual use, but multiple reloading and unloading of this plugin (like what happens in \
         #testing or enabling/disabling via plugins dialogue) with the "naive" implementation will end up with duplicates in PATH var for the QGIS session. 
-        #Native implementation:
+        #Naive implementation:
         #os.environ["PATH"] += ";".join([Utilities.TauDEMPath(), Utilities.MPIPath(), Utilities.GDALPath()])
         
         if (not os.environ["PATH"].endswith(";")): #not guaranteed. We could just force adding the ";" before requirePaths bellow, but i'd rather avoid having double ;; 
@@ -95,7 +101,7 @@ class Utilities():
                 os.environ["PATH"] += requiredPath + ";"
         
     @staticmethod
-    def SanitizeString(string : str) -> str: #returns a string with only lowercase, alphanumeric ASCII characters, no spaces, no special chars
+    def SanitizeString(string : str) -> str: #returns a string with only lowercase, alphanumeric ASCII characters, no spaces, no special chars (although QGIS didn't object to hyphens)
         legalCharset = "abcdefghijklmnopqrstuvwxyz123456789"
         sanitizedString = ""
         
@@ -217,6 +223,7 @@ class Utilities():
 
         result["text"] = result["text"].replace("<imgdir>", Utilities.ImageDirPath())
         #QgsMessageLog.logMessage(f"help: {result}") #test
+        helpTextFile.close()
         return result
 
     #Supposedly, results for layer.source() may contain stuff other than the path (i.e. layer name, username, password, etc) This method 
@@ -225,17 +232,17 @@ class Utilities():
     #the format. 
     #TODO research this further.
     @staticmethod
-    def GetLayerAbsolutePath(layer):
+    def GetLayerAbsolutePath(layer : str) -> str:
         if (layer is None):
             return ""
         return layer.source().split("|layername")[0]
     
     @staticmethod
-    def WrapInQuotes(path):
+    def WrapInQuotes(path : str) -> str:
         return "\""+path+"\""
 
     @staticmethod
-    def ExecuteTauDEMTool(command, threads, feedback : QgsProcessingFeedback): #command is string that starts with exec name WITHOUT absolute path to TauDEM instllation.
+    def ExecuteTauDEMTool(command : str, threads : int, feedback : QgsProcessingFeedback) -> None: #command is string that starts with exec name WITHOUT absolute path to TauDEM instllation.
         #Ensure useful thread value
         if (threads < 1):
             feedback.pushInfo(f"Warning: Invalid thread count value {threads}. Setting to 1")

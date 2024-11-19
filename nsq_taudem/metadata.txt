@@ -28,7 +28,7 @@ tags=python,processing,taudem,hydrology,watershed analysis,terrain analysis
 
 homepage=https://github.com/Shihabyooo/Not-So-QT-DEM
 category=Analysis
-icon=icon.png
+icon=img/logo.png
 # experimental flag
 experimental=True
 

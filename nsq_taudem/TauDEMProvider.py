@@ -50,6 +50,9 @@ class TauDEMProvider(QgsProcessingProvider):
 
     def icon(self):
         return Utilities.GetIcon()
+    
+    def svgIconPath(self):
+        return Utilities.GetIconSVGPath()
 
     def longName(self):
         return self.name()
