@@ -141,7 +141,7 @@ class Algorithm(QgsProcessingAlgorithm):
         for input in self.tool.inputParams:
             self.addParameter(self.QGISParameter(input, False))
 
-        #thread count is universal for all algorithms, not included int he descriptions
+        #process count is universal for all algorithms, not included int he descriptions
         self.addParameter(QgsProcessingParameterNumber(name = "PROCESS_COUNT", description = "Number of processes to use (Requires MPI enabled)", optional = False, defaultValue = 4, type = QgsProcessingParameterNumber.Integer) )
 
         for output in self.tool.outputParams:

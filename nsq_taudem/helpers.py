@@ -1,21 +1,18 @@
 import os
 import csv
-from itertools import islice
 import subprocess
+from itertools import islice
+from platform import uname
 
 from processing.core.ProcessingConfig import ProcessingConfig
-#from processing.tools.system import isWindows, isMac, userFolder
-
 from qgis.core import (Qgis,
                        QgsApplication,
                        QgsMessageLog,
                        QgsProcessingFeedback)
 from qgis.PyQt.QtGui import QIcon
 
-#TODO implement Windows/Linux/Mac distinction (at least to give clearer message on why things aren't working, in the latter two's cases)
 #TODO unify your if/for argument styles (some have them inside brackets, others don't.)
-#TODO unify path slash convention
-#TODO create a utility that converts non-supported vector formats to shp
+#TODO (check again if this is a requirement) create a utility that converts non-supported vector formats to shp 
 #TauDEM docs state they accept all raster formats supported by GDAL, so we don't need to manipulte them(?)
 
 class Tool():
@@ -32,8 +29,8 @@ class Tool():
         self.helpURL = "" #URL to be opened when user clicks on "help" button on the tool's dialogue.
 
 class Utilities():
-    DEFAULT_TAUDEM_PATH = "C:\\Program Files\\TauDEM\\TauDEM5Exe\\" #default for TauDEM 5.3 installer
-    DEFAULT_MPI_PATH = "C:\\Program Files\\Microsoft MPI\\Bin\\" 
+    DEFAULT_TAUDEM_PATH = "C:/Program Files/TauDEM/TauDEM5Exe/" #default for TauDEM 5.3 installer
+    DEFAULT_MPI_PATH = "C:/Program Files/Microsoft MPI/Bin/" 
     
     @staticmethod
     def IsValidDir(path : str) -> bool:
@@ -44,7 +41,7 @@ class Utilities():
         path = ProcessingConfig.getSetting(settingName)
         
         if path is None or not Utilities.IsValidDir(path):
-            QgsMessageLog.logMessage(f"{settingName} is not set to a valid path in provider settings. Currently set path: \"{path}\". Will attempt to use default: \"{default}\"", level=Qgis.Warning)
+            QgsMessageLog.logMessage(f"{settingName} is not set to a valid path in provider settings. Currently set path: \"{path}\". Will attempt to use default: \"{default}\"", level=Qgis.Warning, notifyUser = False)
             return default
         
         #add a trailing slash here
@@ -63,7 +60,7 @@ class Utilities():
     
     def GDALPath() -> str: #TODO figure out how to point to the GDAL libs QGIS ships with/uses (although it's probably better to use what TauDEM uses). Alternatively,\
         #implement similar to TauDEMPath() and MPIPath() with a DEFAULT_GDAL_PATH const, and expose setting in QGIS config menu.
-        return "C:\\Program Files\\GDAL"
+        return "C:/Program Files/GDAL"
 
     @staticmethod
     def DescriptionFilePath() -> str:
@@ -112,89 +109,83 @@ class Utilities():
                 sanitizedString += letter
 
         if (len(sanitizedString) < 1):
-            QgsMessageLog.logMessage(f"Warning: When sanitizeing string {string}, result was an empty string", level=Qgis.Warning)
+            QgsMessageLog.logMessage(f"Warning: When sanitizeing string {string}, result was an empty string", level=Qgis.Warning, notifyUser = False)
 
         return sanitizedString
-
 
     @staticmethod
     def ParseToolsDesc() -> list[Tool]:
         tools = []
         
-        QgsMessageLog.logMessage(f"Parsing tools description file at \"{Utilities.DescriptionFilePath()}\"", level=Qgis.Info)
+        QgsMessageLog.logMessage(f"Parsing tools description file at \"{Utilities.DescriptionFilePath()}\"", level=Qgis.Info, notifyUser = False)
 
-        with open (Utilities.DescriptionFilePath(), mode="r", newline="") as descFile:
-            descFileParser = csv.reader(descFile, delimiter= ",", quotechar = "\"")
-        
-            next(islice(descFileParser, 4, None)) #skip to start of first tool desc
-            
-            for row in descFileParser:
-                if(row[0] in ["END", "End", "end"]): #end flag set to end parsing before eof. Mainly for testing
-                    QgsMessageLog.logMessage(f"Found a manual end flag while parsing the description file.", level=Qgis.Warning)
-                    break
-
-                tool = Tool()
-                
-                tool.type = int(row[0])
-                
-                if (tool.type == 0): #input/output count is only useful (at this phase) for non-staged tools. Values may not be set in the desc file for staged tools, which would cause reading them to bug out.
-                    inputCount = int(row[1])
-                    outputCount = int(row[2])
-                
-                tool.displayName, tool.groupDisplayName, tool.exec = next(descFileParser)[0:3]
-                #tool.name = tool.displayName.replace(" ", "").lower()
-                tool.name = Utilities.SanitizeString(tool.displayName)
-                #tool.group = tool.groupDisplayName.replace(" ", "").lower()
-                tool.group = Utilities.SanitizeString(tool.groupDisplayName)
-                #QgsMessageLog.logMessage(f"Parsing \"{tool.group}/{tool.name}\"", level=Qgis.Info) #test
-                
-                #parse the tool's help text and URL
-                helpTextURL = Utilities.ParseToolHelpTextURL(tool.name)
-                tool.helpURL = helpTextURL["url"]
-                tool.helpText = helpTextURL["text"]
-
-                if (tool.type != 0): #we only need to process the next for non-staged tools
-                    tools.append(tool)
-                    continue
-
-                for input in range(0, inputCount):
-                    row = next(descFileParser)
-                    #QgsMessageLog.logMessage(f"input parameter: \"{row}\"", level=Qgis.Info) #test
-                    params = {  "desc" : row[0],
-                                "option" : row[1],
-                                "type" : row[2],
-                                "isOptional" : int(row[3])}
-                    
-                    if row[4] != "": #we have a default value for this input
-                        if params["type"] in ["b", "i"]:
-                            params["default"] = int(row[4])
-                        elif params["type"] == "f":
-                            params["default"] = float(row[4])
-                        elif params["type"] == "l":
-                            subList = row[4].split("|")
-                            subListDict = {}
-                            for entry in subList:
-                                pair = entry.split(":")
-                                subListDict[pair[0]] = pair[1]
-                            params["list"] = subListDict
-
-                    tool.inputParams.append(params)
-
-                for output in range (0, outputCount):
-                    row = next(descFileParser)
-                    #QgsMessageLog.logMessage(f"output parameter: \"{row}\"", level=Qgis.Info) #test
-                    params = {  "desc" : row[0],
-                                "option" : row[1],
-                                "type" : row[2]}
-                    tool.outputParams.append(params)
-
-                tools.append(tool)
-                
-            QgsMessageLog.logMessage(f"Parsed {len(tools)} tools", level=Qgis.Success)
+        try:
+            descFile = open (Utilities.DescriptionFilePath(), mode="r", newline="")
+        except Exception as exception:
+            QgsMessageLog.logMessage(f"Failed to parse TauDEM tool descriptions file.", level=Qgis.Critical, notifyUser = True)
+            QgsMessageLog.logMessage(f"Failed to open file: \"{Utilities.DescriptionFilePath()}\". Exception thrown: {str(exception)}", level=Qgis.Critical, notifyUser = False)
             return tools
+            
+        descFileParser = csv.reader(descFile, delimiter= ",", quotechar = "\"")
+    
+        next(islice(descFileParser, 4, None)) #skip to start of first tool desc 
         
-        QgsMessageLog.logMessage("Failed to parse TauDEM tools file (Error opening file)", level=Qgis.Warning)
-        return []
+        for row in descFileParser:
+            if(row[0] in ["END", "End", "end"]): #end flag set to end parsing before eof. Mainly for testing
+                QgsMessageLog.logMessage(f"Found a manual end flag while parsing the description file.", level=Qgis.Info, notifyUser = False)
+                break
+
+            tool = Tool()
+            tool.type = int(row[0])
+            if (tool.type == 0): #input/output count is only useful (at this phase) for non-staged tools. Values may not be set in the desc file for staged tools, which would cause reading them to bug out.
+                inputCount = int(row[1])
+                outputCount = int(row[2])
+            
+            tool.displayName, tool.groupDisplayName, tool.exec = next(descFileParser)[0:3]
+            tool.name = Utilities.SanitizeString(tool.displayName)
+            tool.group = Utilities.SanitizeString(tool.groupDisplayName)
+            
+            #parse the tool's help text and URL
+            helpTextURL = Utilities.ParseToolHelpTextURL(tool.name)
+            tool.helpURL = helpTextURL["url"]
+            tool.helpText = helpTextURL["text"]
+
+            if (tool.type != 0): #we only need to process the next for non-staged tools
+                tools.append(tool)
+                continue
+
+            for input in range(0, inputCount):
+                row = next(descFileParser)
+                params = {  "desc" : row[0],
+                            "option" : row[1],
+                            "type" : row[2],
+                            "isOptional" : int(row[3])}
+                
+                if row[4] != "": #we have a default value (or list elements) for this input
+                    if params["type"] in ["b", "i"]:
+                        params["default"] = int(row[4])
+                    elif params["type"] == "f":
+                        params["default"] = float(row[4])
+                    elif params["type"] == "l":
+                        subList = row[4].split("|")
+                        subListDict = {}
+                        for entry in subList:
+                            pair = entry.split(":")
+                            subListDict[pair[0]] = pair[1]
+                        params["list"] = subListDict
+
+                tool.inputParams.append(params)
+
+            for output in range (0, outputCount):
+                row = next(descFileParser)
+                params = {"desc" : row[0], "option" : row[1], "type" : row[2]}
+                tool.outputParams.append(params)
+
+            tools.append(tool)
+            
+        QgsMessageLog.logMessage(f"Parsed {len(tools)} tools", level=Qgis.Success, notifyUser = False)
+        descFile.close()
+        return tools
 
     @staticmethod
     def ParseToolHelpTextURL(toolName : str) -> dict[str, str]: 
@@ -203,8 +194,8 @@ class Utilities():
         try:
             helpTextFile = open (Utilities.HelpTextFilePath(toolName), "r")
         except Exception as exception:
-            QgsMessageLog.logMessage(f"Failed to open help text file \"{Utilities.HelpTextFilePath(toolName)}\"", level=Qgis.Warning)
-            QgsMessageLog.logMessage(f"Exception thrown: {str(exception)}", level=Qgis.Warning)
+            QgsMessageLog.logMessage(f"Failed to open help text file \"{Utilities.HelpTextFilePath(toolName)}\"", level=Qgis.Critical, notifyUser = False)
+            QgsMessageLog.logMessage(f"Exception thrown: {str(exception)}", level=Qgis.Critical, notifyUser = False)
             return result
         
         for line in helpTextFile:
@@ -222,7 +213,6 @@ class Utilities():
                 result[sanitzedLine] = value.strip("\n")
 
         result["text"] = result["text"].replace("<imgdir>", Utilities.ImageDirPath())
-        #QgsMessageLog.logMessage(f"help: {result}") #test
         helpTextFile.close()
         return result
 
@@ -241,20 +231,40 @@ class Utilities():
     def WrapInQuotes(path : str) -> str:
         return "\""+path+"\""
 
+    #TODO consider disabling MPI if mpiProcessCount is set to 1
     @staticmethod
-    def ExecuteTauDEMTool(command : str, threads : int, feedback : QgsProcessingFeedback) -> None: #command is string that starts with exec name WITHOUT absolute path to TauDEM instllation.
-        #Ensure useful thread value
-        if (threads < 1):
-            feedback.pushInfo(f"Warning: Invalid thread count value {threads}. Setting to 1")
-            threads = max(1, threads)
+    def GetPlatformSpecificCommand(command : str, mpiProcessCount : int) -> str:
+        platform = uname().system.lower()
+        useMPI = ProcessingConfig.getSetting("USE_MPI")
         
-        if (ProcessingConfig.getSetting("USE_MPI")):
-            feedback.pushInfo(f"Microsoft MPI use enabled. Using {threads} thread(s)")
-            command = "mpiexec -n " + str(threads) + " " + command
-        else:
-            feedback.pushInfo(f"Microsoft MPI use disabled")
+        #TODO do we need to append ".exe" to executable name in Windows? Runs fine on the dev system, but is it guaranteed for all?
+        if platform == "windows": #use Microsoft's MPI (if enabled) and prepend "cmd.exe /C " to the command
+            if useMPI:
+                 command = "mpiexec -n " + str(mpiProcessCount) + " " + command
+            return "cmd.exe /C " + Utilities.WrapInQuotes(command)
+        elif platform == "linux": #TODO implement
+            if useMPI:
+                pass
+            feedback.pushInfo(f"ERROR! Linux support is not finalized yet.")
+            return ""
+        elif platform == "darwin": #Anyone willing to shell out $$$ on Apple's overpriced walled garden is welcome to implement and test this...
+            if useMPI:
+                pass
+            feedback.pushInfo(f"ERROR! MacOS is not supported.")
+            return ""
+        else: #Shouldn't -practically- happen, but still.
+            feedback.pushInfo(f"Error! Can't determine running platform. Found: {platform}. Expected: windows, linux, or darwin.")
+            return ""
 
-        command = "cmd.exe /C " + Utilities.WrapInQuotes(command)
+    @staticmethod
+    def ExecuteTauDEMTool(command : str, mpiProcessCount : int, feedback : QgsProcessingFeedback) -> None: #command is string that starts with exec name WITHOUT absolute path to TauDEM instllation.
+        #Ensure useful process count value
+        if (mpiProcessCount < 1):
+            feedback.pushInfo(f"Warning: Invalid process count value {mpiProcessCount}. Setting to 1")
+            mpiProcessCount = max(1, mpiProcessCount)
+        
+        #command = "cmd.exe /C " + Utilities.WrapInQuotes(command)
+        command = Utilities.GetPlatformSpecificCommand(command, mpiProcessCount)
 
         feedback.pushInfo(f"Executing shell command: {command}")
 
@@ -268,4 +278,4 @@ class Utilities():
                 for output in iter(process.stdout.readline, ''):
                     feedback.pushInfo(output)
             except Exception as exception:  # noqa  # pylint:disable=bare-except
-                feedback.pushInfo(f"caught exception: {exception}") 
+                feedback.pushInfo(f"caught exception: {str(exception)}") 
