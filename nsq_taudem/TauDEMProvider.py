@@ -1,8 +1,9 @@
 from processing.core.ProcessingConfig import ProcessingConfig, Setting
-from qgis.core import QgsProcessingProvider, QgsApplication
-from .helpers import Utilities, Tool
-from .AlgorithmGenerator import Algorithm
-
+from qgis.core import QgsProcessingProvider, QgsApplication, QgsMessageLog, Qgis
+from .helpers import Utilities
+#from .Tools.AlgorithmGenerator import Algorithm
+from .Tools import *
+import sys, os
 
 class TauDEMProvider(QgsProcessingProvider):
 
@@ -40,7 +41,14 @@ class TauDEMProvider(QgsProcessingProvider):
 
     def loadAlgorithms(self):
         for tool in Utilities.ParseToolsDesc():
-            self.addAlgorithm(Algorithm(tool))
+            if (tool.type == 0):
+                self.addAlgorithm(AlgorithmGenerator.Algorithm(tool))
+            else:
+                moduleName = f"{os.path.basename(os.path.normpath(os.path.dirname(__file__)))}.Tools.{tool.exec[0:-3]}"
+                
+                if moduleName in sys.modules:
+                    module = sys.modules[moduleName]
+                    self.addAlgorithm(module.StagedAlgorithm(tool))
 
     def id(self):
         return 'TauDEM'

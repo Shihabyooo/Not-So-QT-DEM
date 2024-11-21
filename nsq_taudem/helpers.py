@@ -6,7 +6,6 @@ from platform import uname
 
 from processing.core.ProcessingConfig import ProcessingConfig
 from qgis.core import (Qgis,
-                       QgsApplication,
                        QgsMessageLog,
                        QgsProcessingFeedback)
 from qgis.PyQt.QtGui import QIcon
@@ -81,7 +80,7 @@ class Utilities():
     @staticmethod
     def GetIconSVGPath() -> str:
         return Utilities.ImageDirPath() + "logo.svg"
-        
+    
     @staticmethod
     def SetPATH() -> None:
         #add only what's missing. Shouldn't be serious requirment for actual use, but multiple reloading and unloading of this plugin (like what happens in \

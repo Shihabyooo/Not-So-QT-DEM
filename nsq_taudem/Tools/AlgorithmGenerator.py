@@ -1,10 +1,6 @@
-from .helpers import Utilities, Tool
+from ..helpers import Utilities, Tool
 
-from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (QgsProcessing,
-                       QgsApplication,
-                       QgsMessageLog, #for testing only, TODO remove
-                       QgsFeatureSink,
                        QgsProcessingException,
                        QgsProcessingAlgorithm,
                        QgsProcessingParameterRasterLayer,
@@ -15,7 +11,6 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterNumber,
                        QgsProcessingParameterFileDestination,
                        QgsProcessingParameterEnum)
-from qgis import processing
 
 class Algorithm(QgsProcessingAlgorithm):
     def __init__(self, tool : Tool):
@@ -137,12 +132,15 @@ class Algorithm(QgsProcessingAlgorithm):
 
         return [param["option"], evaluatedParam]
 
+    def AddProcessCountInputParam(self):
+        self.addParameter(QgsProcessingParameterNumber(name = "PROCESS_COUNT", description = "Number of processes to use (Requires MPI enabled)", optional = False, defaultValue = 4, type = QgsProcessingParameterNumber.Integer))
+
     def initAlgorithm(self, config=None):
         for input in self.tool.inputParams:
             self.addParameter(self.QGISParameter(input, False))
 
-        #process count is universal for all algorithms, not included int he descriptions
-        self.addParameter(QgsProcessingParameterNumber(name = "PROCESS_COUNT", description = "Number of processes to use (Requires MPI enabled)", optional = False, defaultValue = 4, type = QgsProcessingParameterNumber.Integer) )
+        #process count is universal for all algorithms, not included int the descriptions
+        self.AddProcessCountInputParam()
 
         for output in self.tool.outputParams:
             self.addParameter(self.QGISParameter(output, True))
@@ -169,13 +167,6 @@ class Algorithm(QgsProcessingAlgorithm):
                     raise QgsProcessingException(self.invalidSourceError(parameters, input["option"][1:]))
             
             command += evaluatedParam
-
-            # if (input["type"] in ["r", "v0", "v1", "v2", "t"]):
-            #     command += [input["option"], Utilities.WrapInQuotes(Utilities.GetLayerAbsolutePath(evaluatedParam))]
-            # elif (input["type"] in ["i", "f"]):
-            #     command += [input["option"], str(evaluatedParam)]
-            # elif (input["type"] == "b" and evaluatedParam):
-            #     command.append(input["option"])
 
         #loop over outputs. These all evaluate to paths (strings), so no need for special method to handle them
         for output in self.tool.outputParams:
