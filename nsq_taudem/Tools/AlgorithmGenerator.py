@@ -12,6 +12,9 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterFileDestination,
                        QgsProcessingParameterEnum)
 
+#TODO consider refactoring the QGISParameters() method to call individual Parameter generation methods. Bonus: saves lines in the\
+#staged tools' scripts (wouldn't need to import the types for each one)
+
 class Algorithm(QgsProcessingAlgorithm):
     def __init__(self, tool : Tool):
         super().__init__()
@@ -50,6 +53,15 @@ class Algorithm(QgsProcessingAlgorithm):
     def svgIconPath(self):
         return Utilities.GetIconSVGPath()
 
+    def ParameterName(self, param):
+        #param["option"] is unique for each input/output for each tool. We can strip the leading hyphen and use it as ID.
+        #rationale: QGIS tool tip when hovering on input shows its ID.
+        #Some input don't have their own options. Multiple ones may use one option, which is defined for the first input in the description file. Handle them here
+        if ("option" in param.keys() and param["option"] != ""):
+            return param["option"][1:]
+        else:
+            return Utilities.SanitizeString(param["desc"])
+
     def QGISParameter(self, param, isOuput : bool):
         #{"desc" : str = description of the input
             # "option" : str  = cli option
@@ -61,17 +73,7 @@ class Algorithm(QgsProcessingAlgorithm):
 
         pType = param["type"].lower()
         pDispName = self.tr(param["desc"])
-        
-        #param["option"] is unique for each input/output for each tool. We can strip the leading hyphen and use it as ID.
-        #rationale: QGIS tool tip when hovering on input shows its ID.
-
-        pIdName = ""
-        #Some input don't have their own options. Multiple ones may use one option, which is defined for the first input in the description file. Handle them here
-        if (param["option"] != ""):
-            pIdName = param["option"][1:]
-        else:
-            pIdName = Utilities.SanitizeString(param["desc"])
-
+        pIdName = self.ParameterName(param)
         defVal = None if "default" not in param else param["default"]
 
         #TODO consider switching this to match case statement
@@ -100,8 +102,7 @@ class Algorithm(QgsProcessingAlgorithm):
 
     def EvaluateQGISInputParameter(self, param, paramList, context) -> list:
         pType = param["type"].lower()
-        args = {"parameters" : paramList, "name" : param["option"][1:] , "context" : context}
-
+        args = {"parameters" : paramList, "name" : self.ParameterName(param) , "context" : context}
         evaluatedParam= ""
 
         if (pType in ["r", "v0", "v1", "v2"]):
@@ -147,11 +148,6 @@ class Algorithm(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, parameters, context, feedback):
         results = {}
-        
-        if (self.tool.type > 0):
-            feedback.pushInfo(f"Staged tools are not implemented yet")
-            return results
-        
         command = []
         command.append(Utilities.WrapInQuotes(Utilities.TauDEMPath() + self.tool.exec))
 
@@ -180,11 +176,7 @@ class Algorithm(QgsProcessingAlgorithm):
                 results[output["option"][1:]] = evaluatedParam
             
         #handle processes count
-        processCount = self.parameterAsInt(
-            parameters,
-            "PROCESS_COUNT",
-            context
-        )
+        processCount = self.parameterAsInt(parameters, "PROCESS_COUNT", context)
 
         #ExecuteTauDemTool expects a single string with command and all args, not a list of strings.
         command = " ".join(command)
