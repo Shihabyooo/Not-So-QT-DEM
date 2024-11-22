@@ -209,7 +209,7 @@ Side smoothing weight,,f,0,0.1
 Diagonal smoothing weight,,f,0,0.05
 Stream source grid,-ss,r,,
 1,,,,
-Peuker Douglas Stream Definition,Stream Network Analysis,TODO,,
+Peuker Douglas Stream Definition,Stream Network Analysis,PeukerDouglasStreamDefinition.py,,
 0,4,1,,
 Slope Area Combination,Stream Network Analysis,SlopeArea,,
 Slope grid,-slp,r,0,

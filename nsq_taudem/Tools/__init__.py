@@ -1,1 +1,1 @@
-__all__ = ["AlgorithmGenerator", "WatershedGridToSHP"] #TODO dynamically generate this list from directory content
+__all__ = ["AlgorithmGenerator", "WatershedGridToSHP", "PeukerDouglasStreamDefinition"] #TODO dynamically generate this list from directory content
