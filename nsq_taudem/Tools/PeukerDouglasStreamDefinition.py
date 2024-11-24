@@ -8,7 +8,8 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterNumber,
                        QgsProcessingParameterBoolean,
                        QgsProcessingParameterFeatureSource,
-                       QgsProcessingParameterRasterDestination)
+                       QgsProcessingParameterRasterDestination,
+                       QgsProcessingParameterFileDestination)
 import processing
 
 class StagedAlgorithm(Algorithm):
@@ -31,6 +32,7 @@ class StagedAlgorithm(Algorithm):
     STR_SRC = "strsrc"
     FAC = "fac"
     STR_GRD = "strgrd"
+    DRP_FILE = "drpfile"
 
     def initAlgorithm(self, config=None):
         #Elevation Grid =r
@@ -126,63 +128,104 @@ class StagedAlgorithm(Algorithm):
         self.addParameter(QgsProcessingParameterRasterDestination(name = self.FAC, description = "Accumulated stream source grid"))
         # Stream Raster Gird
         self.addParameter(QgsProcessingParameterRasterDestination(name = self.STR_GRD, description = "Stream raster grid"))
-
+        # Drop analysis text file
+        self.addParameter(QgsProcessingParameterFileDestination(name = self.DRP_FILE, description = "Drop analysis text file"))
 
     def processAlgorithm(self, parameters, context, feedback):
         inputs = {}
         outputs = {}
-        
-        inputs[self.DEM] = self.EvaluateQGISInputParameter({"type" : "r", "option" : "", "desc" : self.DEM}, parameters, context)
-        inputs[self.FDR] = self.EvaluateQGISInputParameter({"type" : "r", "option" : "", "desc" : self.FDR}, parameters, context)
-        inputs[self.WCENTER] = self.EvaluateQGISInputParameter({"type" : "f", "option" : "", "desc" : self.WCENTER}, parameters, context)
-        inputs[self.WSIDE] = self.EvaluateQGISInputParameter({"type" : "f", "option" : "", "desc" : self.WSIDE}, parameters, context)
-        inputs[self.WDIAG] = self.EvaluateQGISInputParameter({"type" : "f", "option" : "", "desc" : self.WDIAG}, parameters, context)
-        inputs[self.ACC_THRESH] = self.EvaluateQGISInputParameter({"type" : "i", "option" : "", "desc" : self.ACC_THRESH}, parameters, context)
-        inputs[self.CHECK_EDGE] = len(self.EvaluateQGISInputParameter({"type" : "b", "option" : "", "desc" : self.CHECK_EDGE}, parameters, context)) > 0
-        inputs[self.OUTLETS] = self.EvaluateQGISInputParameter({"type" : "v0", "option" : "", "desc" : self.OUTLETS}, parameters, context)
-        inputs[self.MASK] = self.EvaluateQGISInputParameter({"type" : "r", "option" : "", "desc" : self.MASK}, parameters, context)
-        inputs[self.D8_CONTRIB] = self.EvaluateQGISInputParameter({"type" : "r", "option" : "", "desc" : self.D8_CONTRIB}, parameters, context)
-        inputs[self.USE_THRESH] = len(self.EvaluateQGISInputParameter({"type" : "b", "option" : "", "desc" : self.USE_THRESH}, parameters, context)) > 0
-        inputs[self.MIN_THRESH] = self.EvaluateQGISInputParameter({"type" : "i", "option" : "", "desc" : self.MIN_THRESH}, parameters, context)
-        inputs[self.MAX_THRESH] = self.EvaluateQGISInputParameter({"type" : "i", "option" : "", "desc" : self.MAX_THRESH}, parameters, context)
-        inputs[self.NUM_THRESH] = self.EvaluateQGISInputParameter({"type" : "i", "option" : "", "desc" : self.NUM_THRESH}, parameters, context)
-        inputs[self.USE_LOG] = len(self.EvaluateQGISInputParameter({"type" : "b", "option" : "", "desc" : self.USE_LOG}, parameters, context)) > 0
+
+        #Note optional params are going to be empty strings "" not None if unset by user
+        inputs[self.DEM] = Utilities.GetLayerAbsolutePath(self.parameterAsLayer(parameters = parameters, name = self.DEM, context = context))
+        inputs[self.FDR] = Utilities.GetLayerAbsolutePath(self.parameterAsLayer(parameters = parameters, name = self.FDR, context = context))
+        inputs[self.WCENTER] = self.parameterAsDouble(parameters = parameters, name = self.WCENTER, context = context)
+        inputs[self.WSIDE] = self.parameterAsDouble(parameters = parameters, name = self.WSIDE, context = context)
+        inputs[self.WDIAG] = self.parameterAsDouble(parameters = parameters, name = self.WDIAG, context = context)
+        inputs[self.ACC_THRESH] = self.parameterAsInt(parameters = parameters, name = self.ACC_THRESH, context = context)
+        inputs[self.CHECK_EDGE] = self.parameterAsBool(parameters = parameters, name = self.CHECK_EDGE, context = context)
+        inputs[self.OUTLETS] = Utilities.GetLayerAbsolutePath(self.parameterAsLayer(parameters = parameters, name = self.OUTLETS, context = context))
+        inputs[self.MASK] = Utilities.GetLayerAbsolutePath(self.parameterAsLayer(parameters = parameters, name = self.MASK, context = context))
+        inputs[self.D8_CONTRIB] = Utilities.GetLayerAbsolutePath(self.parameterAsLayer(parameters = parameters, name = self.D8_CONTRIB, context = context))
+        inputs[self.USE_THRESH] = self.parameterAsBool(parameters = parameters, name = self.USE_THRESH, context = context)
+        inputs[self.MIN_THRESH] = self.parameterAsInt(parameters = parameters, name = self.MIN_THRESH, context = context)
+        inputs[self.MAX_THRESH] = self.parameterAsInt(parameters = parameters, name = self.MAX_THRESH, context = context)
+        inputs[self.NUM_THRESH] = self.parameterAsInt(parameters = parameters, name = self.NUM_THRESH, context = context)
+        inputs[self.USE_LOG] = self.parameterAsBool(parameters = parameters, name = self.USE_LOG, context = context)
 
         outputs[self.STR_SRC] = self.parameterAsOutputLayer(parameters, self.STR_SRC, context)
         outputs[self.FAC] = self.parameterAsOutputLayer(parameters, self.FAC, context)
         outputs[self.STR_GRD] = self.parameterAsOutputLayer(parameters, self.STR_GRD, context)
+        outputs[self.DRP_FILE] = self.parameterAsFile(parameters, self.DRP_FILE, context)
 
-        processCount = self.parameterAsInt(parameters, "PROCESS_COUNT", context)
+        processCount = self.parameterAsInt(parameters, self.PROC_COUNT, context)
         
-        #validate inputs
-        for key in inputs.keys():
-            if key not in [self.OUTLETS, self.MASK, self.D8_CONTRIB] and inputs[key] is None:
-                feedback.pushInfo(f"Error! Could not evaulate inputs {key}")
-                raise QgsProcessingException(self.invalidSourceError(parameters, key))
+        #validate inputs (TODO is this necessary? QGIS should not allow us to reach this point if the mandatory parameters aren't set)
+        # for key in inputs.keys():
+        #     if key not in [self.OUTLETS, self.MASK, self.D8_CONTRIB] and inputs[key] is None:
+        #         feedback.pushInfo(f"Error! Could not evaulate inputs {key}")
+        #         raise QgsProcessingException(self.invalidSourceError(parameters, key))
         
         #TODO validate output path generation 
 
-        #note: ommit optional input from commands bellow if not entered by user
-        #first run PeukerDouglas (in DEM, in WCenterm in Wside, in Wdiag,  out StrSrc)
-            #strsrc is now an input to other tools
-        #run AreaD8 (in FDR, in Oulets, in CheckEdge, out FAC) 
-            #Note: This FAC is an AD8 FAC.
+        feedback.pushInfo(f"Excecuting Peuker Douglas algorithm") #test
+
+        inputSet = {"fel" : inputs[self.DEM],
+                    "par" : inputs[self.WCENTER], "sidesmoothingweight" : inputs[self.WSIDE], "diagonalsmoothingweight" : inputs[self.WDIAG], 
+                    self.PROC_COUNT : processCount,
+                    "ss" : outputs[self.STR_SRC]}
+        processing.run("TauDEM:peukerdouglas", inputSet)
+            
+        #run AreaD8 (in FDR, in Oulets, in strsrc (as weight grid), in CheckEdge, out FAC)
+        feedback.pushInfo(f"Excecuting D8 Contributing Area algorithm") #test
+        inputSet = {"p": inputs[self.FDR],
+                    "o": inputs[self.OUTLETS] if inputs[self.OUTLETS] != "" else None,
+                    "wg": outputs[self.STR_SRC],
+                    "nc": inputs[self.CHECK_EDGE],
+                    self.PROC_COUNT : processCount,
+                    "ad8": outputs[self.FAC]}
+        processing.run("TauDEM:d8contributingarea", inputSet)
+        
+        threshold = inputs[self.ACC_THRESH] #will be overridden if user supplied an outlet file and set USE_THRESH to true.
+
         #if USETHRESH is set AND Outlets are provided:
             #run DropAnalaysis (in DEM, in FDR, in D8Contrib in FAC, in outlets, in minthresh, in maxthresh, in numthres, in UseLog, out dropfile)
+        if (inputs[self.USE_THRESH] and inputs[self.OUTLETS] != ""):
+            feedback.pushInfo(f"Excecuting Drop Analysis algorithm") #test
+            inputSet = {"fel" : inputs[self.DEM],
+                        "p" : inputs[self.FDR],
+                        "ad8": inputs[self.D8_CONTRIB],
+                        "ssa": outputs[self.FAC], #TODO double check assignment of ad8 and ssa here.
+                        "o" : inputs[self.OUTLETS],
+                        "par":inputs[self.MIN_THRESH],
+                        "maximumthresholdvalue": inputs[self.MAX_THRESH],
+                        "numberofthresholdvalues": inputs[self.NUM_THRESH],
+                        "typeofthresholdsteptobeusedindropanalysis": not inputs[self.USE_LOG], #The called function has Logarithmic as 0, arithmatic as 1. 
+                        self.PROC_COUNT : processCount,
+                        "drp": outputs[self.DRP_FILE]}
+            processing.run("TauDEM:streamdropanalysis", inputSet)
 
-        #process drop file
+            #process drop file
             #Drop file has many entires, what we need is the value at the last line, which reads:
             #Optimium Threshold Value: (Threshold as floating number)
             #The arcpy implementation simply opens the file, grabs all content, then splits (using
             #rsplit) once with space as delimited (i.e. dropFileContent.rsplot(" ", 1)) and takes the
             #second entry from the resulting list, which the floating number above.
-        
-        #if USETHRESH and Oulets is given:
-            #threshold = threshold from drop analysis
-        #else
-            #threshold = ACC_THRESH input by user
+            
+            try:
+                dropFile = open(outputs[self.DRP_FILE])
+                threshold = float(dropFile.read().rsplit(" ", 1)[1])
+                dropFile.close()
+            except Exception as exception: 
+                feedback.pushInfo(f"Error parsing drop file: {Utilities.WrapInQuotes(outputs[self.DRP_FILE])}")
+                raise QgsProcessingException(self.invalidSourceError(parameters, outputs[self.DRP_FILE]))
 
         #run Threshold (in FAC, in threshold, in mask, out strsrc)
+        inputSet = {"ssa": outputs[self.FAC],
+                    "mask": inputs[self.MASK] if inputs[self.MASK] != "" else None,
+                    "thresh": threshold,
+                    self.PROC_COUNT:processCount,
+                    "src": outputs[self.STR_GRD]}
+        processing.run("TauDEM:streamdefinitionbythreshold", inputSet)
         
         #and we're done!
         
