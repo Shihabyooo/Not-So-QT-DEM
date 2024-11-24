@@ -16,6 +16,8 @@ from qgis.core import (QgsProcessing,
 #staged tools' scripts (wouldn't need to import the types for each one)
 
 class Algorithm(QgsProcessingAlgorithm):
+    PROC_COUNT = "proccount"
+
     def __init__(self, tool : Tool):
         super().__init__()
         self.tool = tool
@@ -134,7 +136,7 @@ class Algorithm(QgsProcessingAlgorithm):
         return [param["option"], evaluatedParam]
 
     def AddProcessCountInputParam(self):
-        self.addParameter(QgsProcessingParameterNumber(name = "PROCESS_COUNT", description = "Number of processes to use (Requires MPI enabled)", optional = False, defaultValue = 4, type = QgsProcessingParameterNumber.Integer))
+        self.addParameter(QgsProcessingParameterNumber(name = self.PROC_COUNT, description = "Number of processes to use (Requires MPI enabled)", optional = False, defaultValue = 4, type = QgsProcessingParameterNumber.Integer))
 
     def initAlgorithm(self, config=None):
         for input in self.tool.inputParams:
@@ -147,6 +149,7 @@ class Algorithm(QgsProcessingAlgorithm):
             self.addParameter(self.QGISParameter(output, True))
 
     def processAlgorithm(self, parameters, context, feedback):
+        feedback.pushInfo(f"Starting processing of tool {self.tool.displayName}") #test
         results = {}
         command = []
         command.append(Utilities.WrapInQuotes(Utilities.TauDEMPath() + self.tool.exec))
@@ -166,7 +169,7 @@ class Algorithm(QgsProcessingAlgorithm):
 
         #loop over outputs. These all evaluate to paths (strings), so no need for special method to handle them
         for output in self.tool.outputParams:
-            evaluatedParam = self.parameterAsOutputLayer(parameters,  output["option"][1:], context)
+            evaluatedParam = self.parameterAsOutputLayer(parameters,  output["option"][1:], context) #TODO should text ouputs (e.g. from drop analysis) be parameterAsFile instead?
             if (evaluatedParam is None):
                 raise QgsProcessingException(self.invalidSinkError(parameters, output["option"][1:]))
             
@@ -176,7 +179,7 @@ class Algorithm(QgsProcessingAlgorithm):
                 results[output["option"][1:]] = evaluatedParam
             
         #handle processes count
-        processCount = self.parameterAsInt(parameters, "PROCESS_COUNT", context)
+        processCount = self.parameterAsInt(parameters, self.PROC_COUNT, context)
 
         #ExecuteTauDemTool expects a single string with command and all args, not a list of strings.
         command = " ".join(command)
