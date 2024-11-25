@@ -13,7 +13,7 @@ from qgis.core import (QgsProcessing,
 import processing
 
 class StagedAlgorithm(Algorithm):
-    #TODO use the name that is used for each called TauDEM tool.
+    #TODO use the name that is used for each called TauDEM tool, or the typical name in the docs. See SlopeAreaStreamDef.py
     DEM = "dem"
     FDR = "fdr"
     D8_CONTRIB = "d8contrib"
@@ -68,8 +68,8 @@ class StagedAlgorithm(Algorithm):
         self.addParameter(QgsProcessingParameterNumber(name = self.ACC_THRESH,
                                                             description = "Accumulation threshold",
                                                             optional = False,
-                                                            defaultValue = 50,
-                                                            type = QgsProcessingParameterNumber.Integer))
+                                                            defaultValue = 50.0,
+                                                            type = QgsProcessingParameterNumber.Double))
         # Check Edge contamination = True
         self.addParameter(QgsProcessingParameterBoolean(name = self.CHECK_EDGE,
                                                         description = "Check edge contamination",
@@ -99,14 +99,14 @@ class StagedAlgorithm(Algorithm):
         self.addParameter(QgsProcessingParameterNumber(name = self.MIN_THRESH,
                                                             description = "Minimum threshold value (Drop analysis)",
                                                             optional = False,
-                                                            defaultValue = 5,
-                                                            type = QgsProcessingParameterNumber.Integer))
+                                                            defaultValue = 5.0,
+                                                            type = QgsProcessingParameterNumber.Double))
         # Maximum threshold = 500
         self.addParameter(QgsProcessingParameterNumber(name = self.MAX_THRESH,
                                                             description = "Maximum threshold value (Drop analysis)",
                                                             optional = False,
-                                                            defaultValue = 500,
-                                                            type = QgsProcessingParameterNumber.Integer))
+                                                            defaultValue = 500.0,
+                                                            type = QgsProcessingParameterNumber.Double))
         # Number of threshold values = 10
         self.addParameter(QgsProcessingParameterNumber(name = self.NUM_THRESH,
                                                             description = "Number of threshold values (Drop analysis)",
@@ -129,26 +129,27 @@ class StagedAlgorithm(Algorithm):
         # Stream Raster Gird
         self.addParameter(QgsProcessingParameterRasterDestination(name = self.STR_GRD, description = "Stream raster grid"))
         # Drop analysis text file
-        self.addParameter(QgsProcessingParameterFileDestination(name = self.DRP_FILE, description = "Drop analysis text file"))
+        self.addParameter(QgsProcessingParameterFileDestination(name = self.DRP_FILE, description = "Drop analysis table"))
 
     def processAlgorithm(self, parameters, context, feedback):
         inputs = {}
         outputs = {}
-
+    
         #Note optional params are going to be empty strings "" not None if unset by user
+        #TODO reduce these lines similar to SlopeAreaStreamDef.py. Perhaps they can be refactored into their own method in parent AlgorithmGenerator.py?
         inputs[self.DEM] = Utilities.GetLayerAbsolutePath(self.parameterAsLayer(parameters = parameters, name = self.DEM, context = context))
         inputs[self.FDR] = Utilities.GetLayerAbsolutePath(self.parameterAsLayer(parameters = parameters, name = self.FDR, context = context))
         inputs[self.WCENTER] = self.parameterAsDouble(parameters = parameters, name = self.WCENTER, context = context)
         inputs[self.WSIDE] = self.parameterAsDouble(parameters = parameters, name = self.WSIDE, context = context)
         inputs[self.WDIAG] = self.parameterAsDouble(parameters = parameters, name = self.WDIAG, context = context)
-        inputs[self.ACC_THRESH] = self.parameterAsInt(parameters = parameters, name = self.ACC_THRESH, context = context)
+        inputs[self.ACC_THRESH] = self.parameterAsDouble(parameters = parameters, name = self.ACC_THRESH, context = context)
         inputs[self.CHECK_EDGE] = self.parameterAsBool(parameters = parameters, name = self.CHECK_EDGE, context = context)
         inputs[self.OUTLETS] = Utilities.GetLayerAbsolutePath(self.parameterAsLayer(parameters = parameters, name = self.OUTLETS, context = context))
         inputs[self.MASK] = Utilities.GetLayerAbsolutePath(self.parameterAsLayer(parameters = parameters, name = self.MASK, context = context))
         inputs[self.D8_CONTRIB] = Utilities.GetLayerAbsolutePath(self.parameterAsLayer(parameters = parameters, name = self.D8_CONTRIB, context = context))
         inputs[self.USE_THRESH] = self.parameterAsBool(parameters = parameters, name = self.USE_THRESH, context = context)
-        inputs[self.MIN_THRESH] = self.parameterAsInt(parameters = parameters, name = self.MIN_THRESH, context = context)
-        inputs[self.MAX_THRESH] = self.parameterAsInt(parameters = parameters, name = self.MAX_THRESH, context = context)
+        inputs[self.MIN_THRESH] = self.parameterAsDouble(parameters = parameters, name = self.MIN_THRESH, context = context)
+        inputs[self.MAX_THRESH] = self.parameterAsDouble(parameters = parameters, name = self.MAX_THRESH, context = context)
         inputs[self.NUM_THRESH] = self.parameterAsInt(parameters = parameters, name = self.NUM_THRESH, context = context)
         inputs[self.USE_LOG] = self.parameterAsBool(parameters = parameters, name = self.USE_LOG, context = context)
 
@@ -167,7 +168,10 @@ class StagedAlgorithm(Algorithm):
         
         #TODO validate output path generation 
 
-        feedback.pushInfo(f"Excecuting Peuker Douglas algorithm") #test
+        #TODO the ArcPy implementation rquires both USE_THRESH to be set and outlet file to be provded to use drop analysis. Validate that outlet file is supplied
+        #when USE_THRESH is set to true.
+
+        feedback.pushInfo(f"Executing Peuker Douglas algorithm") #test
 
         inputSet = {"fel" : inputs[self.DEM],
                     "par" : inputs[self.WCENTER], "sidesmoothingweight" : inputs[self.WSIDE], "diagonalsmoothingweight" : inputs[self.WDIAG], 
@@ -176,7 +180,7 @@ class StagedAlgorithm(Algorithm):
         processing.run("TauDEM:peukerdouglas", inputSet)
             
         #run AreaD8 (in FDR, in Oulets, in strsrc (as weight grid), in CheckEdge, out FAC)
-        feedback.pushInfo(f"Excecuting D8 Contributing Area algorithm") #test
+        feedback.pushInfo(f"Executing D8 Contributing Area algorithm") #test
         inputSet = {"p": inputs[self.FDR],
                     "o": inputs[self.OUTLETS] if inputs[self.OUTLETS] != "" else None,
                     "wg": outputs[self.STR_SRC],
@@ -189,8 +193,9 @@ class StagedAlgorithm(Algorithm):
 
         #if USETHRESH is set AND Outlets are provided:
             #run DropAnalaysis (in DEM, in FDR, in D8Contrib in FAC, in outlets, in minthresh, in maxthresh, in numthres, in UseLog, out dropfile)
+            
         if (inputs[self.USE_THRESH] and inputs[self.OUTLETS] != ""):
-            feedback.pushInfo(f"Excecuting Drop Analysis algorithm") #test
+            feedback.pushInfo(f"Executing Drop Analysis algorithm") #test
             inputSet = {"fel" : inputs[self.DEM],
                         "p" : inputs[self.FDR],
                         "ad8": inputs[self.D8_CONTRIB],
@@ -199,7 +204,7 @@ class StagedAlgorithm(Algorithm):
                         "par":inputs[self.MIN_THRESH],
                         "maximumthresholdvalue": inputs[self.MAX_THRESH],
                         "numberofthresholdvalues": inputs[self.NUM_THRESH],
-                        "typeofthresholdsteptobeusedindropanalysis": not inputs[self.USE_LOG], #The called function has Logarithmic as 0, arithmatic as 1. 
+                        "typeofthresholdsteptobeusedindropanalysis": int(not inputs[self.USE_LOG]), #The called function has Logarithmic as 0, arithmatic as 1. 
                         self.PROC_COUNT : processCount,
                         "drp": outputs[self.DRP_FILE]}
             processing.run("TauDEM:streamdropanalysis", inputSet)
@@ -214,6 +219,7 @@ class StagedAlgorithm(Algorithm):
             try:
                 dropFile = open(outputs[self.DRP_FILE])
                 threshold = float(dropFile.read().rsplit(" ", 1)[1])
+                feedback.pushInfo(f"Using automatic threshold value of {threshold}")
                 dropFile.close()
             except Exception as exception: 
                 feedback.pushInfo(f"Error parsing drop file: {Utilities.WrapInQuotes(outputs[self.DRP_FILE])}")

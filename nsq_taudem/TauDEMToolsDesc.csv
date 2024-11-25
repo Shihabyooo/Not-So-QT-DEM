@@ -74,7 +74,7 @@ D-infinity flow direction grid,-ang,r,,
 D-infinity slope grid,-slp,r,,
 0,4,3,,
 Grid Network,Basic Grid Analysis,GridNet,,
-Input D8 flow direction grid,TODO,r,0,
+Input D8 flow direction grid,-p,r,0,
 Outlets,-o,v0,1,
 Mask grid,-mask,r,1,
 Mask threshold value,-thresh,i,1,0
@@ -184,7 +184,7 @@ Moved outlets file,-od,v0,,
 D8 Extreme Upslope Value,Stream Network Analysis,D8FlowPathExtremeUp,,
 D8 flow direction grid,-p,r,0,
 Value grid,-sa,r,0,
-Use maximum upslope value,-max,b,0,1
+Use minimum upslope value,-min,b,0,0
 Check for edge contamination,-nc,b,0,1
 Outlets,-o,v0,1,
 Extreme value grid,-ssa,r,,
@@ -218,7 +218,7 @@ Slope exponent: m,-par,f,0,2
 Area exponent: n,,f,0,1
 Slope area grid,-sa,r,,
 1,,,,
-Slope Area Stream Definition,Stream Network Analysis,TODO,,
+Slope Area Stream Definition,Stream Network Analysis,SlopeAreaStreamDef.py,,
 1,,,,
 Stream Definition With Drop Analysis,Stream Network Analysis,TODO,,
 0,9,1,,

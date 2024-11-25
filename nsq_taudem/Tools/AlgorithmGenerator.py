@@ -1,6 +1,7 @@
 from ..helpers import Utilities, Tool
 
 from qgis.core import (QgsProcessing,
+                       QgsMessageLog, #for testing only
                        QgsProcessingException,
                        QgsProcessingAlgorithm,
                        QgsProcessingParameterRasterLayer,
@@ -65,14 +66,6 @@ class Algorithm(QgsProcessingAlgorithm):
             return Utilities.SanitizeString(param["desc"])
 
     def QGISParameter(self, param, isOuput : bool):
-        #{"desc" : str = description of the input
-            # "option" : str  = cli option
-            # "type" : str =
-            # "isOptional" : bool =
-            # "type" : str =
-            # "default" : int/float/bool =
-            #}
-
         pType = param["type"].lower()
         pDispName = self.tr(param["desc"])
         pIdName = self.ParameterName(param)
@@ -99,8 +92,7 @@ class Algorithm(QgsProcessingAlgorithm):
         elif (pType == "t"): #text file, only output
             return QgsProcessingParameterFileDestination(name = pIdName, description = pDispName)
         elif(pType == "l"): #list, only input
-            #TODO consider setting default to first entry
-            return QgsProcessingParameterEnum(name = pIdName, description = pDispName, optional = param["isOptional"], allowMultiple = False, usesStaticStrings = True, options = param["list"].keys())
+            return QgsProcessingParameterEnum(name = pIdName, description = pDispName, optional = param["isOptional"], defaultValue = 0, allowMultiple = False, options = param["list"].keys())
 
     def EvaluateQGISInputParameter(self, param, paramList, context) -> list:
         pType = param["type"].lower()
@@ -126,9 +118,12 @@ class Algorithm(QgsProcessingAlgorithm):
             else:
                 return []
         elif (pType == "l"): #The display name is typically different than command value. Former is key to the latter in dict in "default" entry of tool.inputParams.
-            evaluatedParam = self.parameterAsEnumString(**args)
-            if (evaluatedParam is not None):
-                evaluatedParam = param["list"][evaluatedParam]
+            #evaluatedParam = self.parameterAsEnumString(**args)
+            evaluatedParam = self.parameterAsEnum(**args)
+            if (evaluatedParam is not None): 
+                evaluatedParam = param["list"][list(param["list"].keys())[evaluatedParam]] #TODO Assumption here is that list(param["list"].keys()) will return keys in\
+                                                                                           #the same order as enums, and enums always start from 0 incrementing by 1. Does\
+                                                                                           #python guarantee that?
         
         if (evaluatedParam is None):
             return None
