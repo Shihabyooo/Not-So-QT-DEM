@@ -1,7 +1,6 @@
 from processing.core.ProcessingConfig import ProcessingConfig, Setting
 from qgis.core import QgsProcessingProvider, QgsApplication, QgsMessageLog, Qgis
 from .helpers import Utilities
-#from .Tools.AlgorithmGenerator import Algorithm
 from .Tools import *
 import sys, os
 
@@ -32,7 +31,7 @@ class TauDEMProvider(QgsProcessingProvider):
                                              valuetype=Setting.FOLDER))
          
         ProcessingConfig.readSettings()
-        self.refreshAlgorithms() #TODO does this imply loadAlgorithms()? What else?
+        self.refreshAlgorithms()
         Utilities.SetPATH()
         return True
 
@@ -41,7 +40,7 @@ class TauDEMProvider(QgsProcessingProvider):
 
     def loadAlgorithms(self):
         for tool in Utilities.ParseToolsDesc():
-            if (tool.type == 0):
+            if tool.type == 0:
                 self.addAlgorithm(AlgorithmGenerator.Algorithm(tool))
             else:
                 moduleName = f"{os.path.basename(os.path.normpath(os.path.dirname(__file__)))}.Tools.{tool.exec[0:-3]}"

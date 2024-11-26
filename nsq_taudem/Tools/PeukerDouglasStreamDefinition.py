@@ -141,14 +141,6 @@ class StagedAlgorithm(Algorithm):
         outputFiles = [self.DRP_FILE]
 
         self.EvaluateParameters(parameters, context, inputLayers, inputFloats, inputInts, inputsBools, outputLayers, outputFiles)
-        
-        #validate self.inputs (TODO is this necessary? QGIS should not allow us to reach this point if the mandatory parameters aren't set)
-        # for key in self.inputs.keys():
-        #     if key not in [self.OUTLETS, self.MASK, self.D8_CONTRIB] and self.inputs[key] is None:
-        #         feedback.pushInfo(f"Error! Could not evaulate self.inputs {key}")
-        #         raise QgsProcessingException(self.invalidSourceError(parameters, key))
-        
-        #TODO validate output path generation 
 
         #TODO the ArcPy implementation rquires both USE_THRESH to be set and outlet file to be provded to use drop analysis. Validate that outlet file is supplied
         #when USE_THRESH is set to true.
@@ -159,7 +151,7 @@ class StagedAlgorithm(Algorithm):
                     "par" : self.inputs[self.WCENTER], "sidesmoothingweight" : self.inputs[self.WSIDE], "diagonalsmoothingweight" : self.inputs[self.WDIAG], 
                     self.PROC_COUNT : self.inputs[self.PROC_COUNT],
                     "ss" : self.outputs[self.STR_SRC]}
-        processing.run("TauDEM:peukerdouglas", inputSet)
+        processing.run("TauDEM:peukerdouglas", inputSet, feedback = feedback)
             
         #run AreaD8 (in FDR, in Oulets, in strsrc (as weight grid), in CheckEdge, out FAC)
         feedback.pushInfo(f"Executing D8 Contributing Area algorithm") #test
@@ -169,26 +161,27 @@ class StagedAlgorithm(Algorithm):
                     "nc": self.inputs[self.CHECK_EDGE],
                     self.PROC_COUNT : self.inputs[self.PROC_COUNT],
                     "ad8": self.outputs[self.FAC]}
-        processing.run("TauDEM:d8contributingarea", inputSet)
+        processing.run("TauDEM:d8contributingarea", inputSet, feedback = feedback)
         
         threshold = self.inputs[self.ACC_THRESH] #will be overridden if user supplied an outlet file and set USE_THRESH to true.
 
         #if USETHRESH is set AND Outlets are provided:
             #run DropAnalaysis (in DEM, in FDR, in D8Contrib in FAC, in outlets, in minthresh, in maxthresh, in numthres, in UseLog, out dropfile)
-        if (self.inputs[self.USE_THRESH] and self.inputs[self.OUTLETS] != ""):
+        if self.inputs[self.USE_THRESH] and self.inputs[self.OUTLETS] != "":
             feedback.pushInfo(f"Executing Drop Analysis algorithm") #test
             inputSet = {"fel" : self.inputs[self.DEM],
-                             "p" : self.inputs[self.FDR],
-                             "ad8": self.inputs[self.D8_CONTRIB],
-                            "ssa": self.outputs[self.FAC], #TODO double check assignment of ad8 and ssa here.
-                            "o" : self.inputs[self.OUTLETS],
-                            "par": self.inputs[self.MIN_THRESH],
-                            "maximumthresholdvalue": self.inputs[self.MAX_THRESH],
-                            "numberofthresholdvalues": self.inputs[self.NUM_THRESH],
-                            "typeofthresholdsteptobeusedindropanalysis": int(not self.inputs[self.USE_LOG]), #The called function has Logarithmic as 0, arithmatic as 1. 
-                            self.PROC_COUNT : self.inputs[self.PROC_COUNT],
-                            "drp": self.outputs[self.DRP_FILE]}
-            processing.run("TauDEM:streamdropanalysis", inputSet)
+                        "p" : self.inputs[self.FDR],
+                        "ad8": self.inputs[self.D8_CONTRIB],
+                        "ssa": self.outputs[self.FAC], #TODO double check assignment of ad8 and ssa here.
+                        "o" : self.inputs[self.OUTLETS],
+                        "par": self.inputs[self.MIN_THRESH],
+                        "maximumthresholdvalue": self.inputs[self.MAX_THRESH],
+                        "numberofthresholdvalues": self.inputs[self.NUM_THRESH],
+                        "typeofthresholdsteptobeusedindropanalysis": int(not self.inputs[self.USE_LOG]), #The called function has Logarithmic as 0, arithmatic as 1. 
+                        self.PROC_COUNT : self.inputs[self.PROC_COUNT],
+                        "drp": self.outputs[self.DRP_FILE]}
+            
+            processing.run("TauDEM:streamdropanalysis", inputSet, feedback = feedback)
 
             #process drop file
             #Drop file has many entires, what we need is the value at the last line, which reads:
@@ -212,7 +205,7 @@ class StagedAlgorithm(Algorithm):
                     "thresh": threshold,
                     self.PROC_COUNT : self.inputs[self.PROC_COUNT],
                     "src": self.outputs[self.STR_GRD]}
-        processing.run("TauDEM:streamdefinitionbythreshold", inputSet)
+        processing.run("TauDEM:streamdefinitionbythreshold", inputSet, feedback = feedback)
         
         #and we're done!
         

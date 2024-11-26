@@ -1,3 +1,5 @@
+#This tool stages the following tools: Drop Analysis -> Threshold
+
 from .AlgorithmGenerator import Algorithm
 from ..helpers import Utilities
 
@@ -146,7 +148,6 @@ class StagedAlgorithm(Algorithm):
 
         self.EvaluateParameters(parameters, context, inputLayers, inputFloats, inputInts, inputsBools, outputLayers, outputFiles)
 
-        #TODO validate input and output
         #TODO the ArcPy implementation rquires both USE_THRESH to be set and outlet file to be provded to use drop analysis. Validate that outlet file is supplied
         #when USE_THRESH is set to true.
 
@@ -159,7 +160,7 @@ class StagedAlgorithm(Algorithm):
                     self.PROC_COUNT : self.inputs[self.PROC_COUNT],
                     "sa" : self.outputs[self.STR_SAREA]}
         
-        processing.run("TauDEM:slopeareacombination", inputSet)
+        processing.run("TauDEM:slopeareacombination", inputSet, feedback = feedback)
         
         #run D8FlowPathExtremeUp (in pfile, in safile, in shfl, in nc, out ssafile)
         feedback.pushInfo(f"Executing D8 Extreme Upslope Value algorithm") #test
@@ -171,7 +172,7 @@ class StagedAlgorithm(Algorithm):
                     self.PROC_COUNT : self.inputs[self.PROC_COUNT],
                     "ssa" : self.outputs[self.MAX_USLP]}
         
-        processing.run("TauDEM:d8extremeupslopevalue", inputSet)
+        processing.run("TauDEM:d8extremeupslopevalue", inputSet, feedback = feedback)
 
         threshold = self.inputs[self.THRESH] #will be overridden if user supplied an outlet file and set USE_THRESH to true.
 
@@ -191,7 +192,7 @@ class StagedAlgorithm(Algorithm):
                         self.PROC_COUNT : self.inputs[self.PROC_COUNT],
                         "drp": self.outputs[self.DRP_FILE]}
             
-            processing.run("TauDEM:streamdropanalysis", inputSet)
+            processing.run("TauDEM:streamdropanalysis", inputSet, feedback = feedback)
             
             #extract threshold from drop file.
             try:
@@ -210,6 +211,6 @@ class StagedAlgorithm(Algorithm):
                     "thresh" : threshold,
                     self.PROC_COUNT : self.inputs[self.PROC_COUNT],
                     "src" : self.outputs[self.STR_SRC]}
-        processing.run("TauDEM:streamdefinitionbythreshold", inputSet)
+        processing.run("TauDEM:streamdefinitionbythreshold", inputSet, feedback = feedback)
         
         return {self.STR_SRC : self.outputs[self.STR_SRC], self.STR_SAREA : self.outputs[self.STR_SAREA], self.MAX_USLP : self.outputs[self.MAX_USLP]}

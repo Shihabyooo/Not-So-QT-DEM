@@ -10,7 +10,6 @@ from qgis.core import (Qgis,
                        QgsProcessingFeedback)
 from qgis.PyQt.QtGui import QIcon
 
-#TODO unify your if/for argument styles (some have them inside brackets, others don't.)
 #TODO (check again if this is a requirement) create a utility that converts non-supported vector formats to shp 
 #TauDEM docs state they accept all raster formats supported by GDAL, so we don't need to manipulte them(?)
 
@@ -88,7 +87,7 @@ class Utilities():
         #Naive implementation:
         #os.environ["PATH"] += ";".join([Utilities.TauDEMPath(), Utilities.MPIPath(), Utilities.GDALPath()])
         
-        if (not os.environ["PATH"].endswith(";")): #not guaranteed. We could just force adding the ";" before requirePaths bellow, but i'd rather avoid having double ;; 
+        if not os.environ["PATH"].endswith(";"): #not guaranteed. We could just force adding the ";" before requirePaths bellow, but i'd rather avoid having double ;; 
             os.environ["PATH"] += ";"
 
         pathVars = os.environ["PATH"].split(";")
@@ -107,7 +106,7 @@ class Utilities():
             if letter in legalCharset:
                 sanitizedString += letter
 
-        if (len(sanitizedString) < 1):
+        if len(sanitizedString) < 1:
             QgsMessageLog.logMessage(f"Warning: When sanitizeing string {string}, result was an empty string", level=Qgis.Warning, notifyUser = False)
 
         return sanitizedString
@@ -130,13 +129,13 @@ class Utilities():
         next(islice(descFileParser, 4, None)) #skip to start of first tool desc 
         
         for row in descFileParser:
-            if(row[0] in ["END", "End", "end"]): #end flag set to end parsing before eof. Mainly for testing
+            if row[0] in ["END", "End", "end"]: #end flag set to end parsing before eof. Mainly for testing
                 QgsMessageLog.logMessage(f"Found a manual end flag while parsing the description file.", level=Qgis.Info, notifyUser = False)
                 break
 
             tool = Tool()
             tool.type = int(row[0])
-            if (tool.type == 0): #input/output count is only useful (at this phase) for non-staged tools. Values may not be set in the desc file for staged tools, which would cause reading them to bug out.
+            if tool.type == 0: #input/output count is only useful (at this phase) for non-staged tools. Values may not be set in the desc file for staged tools, which would cause reading them to bug out.
                 inputCount = int(row[1])
                 outputCount = int(row[2])
             
@@ -149,7 +148,7 @@ class Utilities():
             tool.helpURL = helpTextURL["url"]
             tool.helpText = helpTextURL["text"]
 
-            if (tool.type != 0): #we only need to process the next for non-staged tools
+            if tool.type != 0: #we only need to process the next for non-staged tools
                 tools.append(tool)
                 continue
 
@@ -222,7 +221,7 @@ class Utilities():
     #TODO research this further.
     @staticmethod
     def GetLayerAbsolutePath(layer : str) -> str:
-        if (layer is None):
+        if layer is None:
             return ""
         return layer.source().split("|layername")[0]
     
@@ -236,7 +235,6 @@ class Utilities():
         platform = uname().system.lower()
         useMPI = ProcessingConfig.getSetting("USE_MPI")
         
-        #TODO do we need to append ".exe" to executable name in Windows? Runs fine on the dev system, but is it guaranteed for all?
         if platform == "windows": #use Microsoft's MPI (if enabled) and prepend "cmd.exe /C " to the command
             if useMPI:
                  command = "mpiexec -n " + str(mpiProcessCount) + " " + command
@@ -258,7 +256,7 @@ class Utilities():
     @staticmethod
     def ExecuteTauDEMTool(command : str, mpiProcessCount : int, feedback : QgsProcessingFeedback) -> None: #command is string that starts with exec name WITHOUT absolute path to TauDEM instllation.
         #Ensure useful process count value
-        if (mpiProcessCount < 1):
+        if mpiProcessCount < 1:
             feedback.pushInfo(f"Warning: Invalid process count value {mpiProcessCount}. Setting to 1")
             mpiProcessCount = max(1, mpiProcessCount)
         

@@ -112,7 +112,7 @@ class StagedAlgorithm(Algorithm):
                         self.PROC_COUNT : self.inputs[self.PROC_COUNT],
                         "drp": self.outputs[self.DRP_FILE]}
         
-        processing.run("TauDEM:streamdropanalysis", inputSet)
+        processing.run("TauDEM:streamdropanalysis", inputSet, feedback = feedback)
 
         #extract threshold from drop file.
         try:
@@ -132,6 +132,6 @@ class StagedAlgorithm(Algorithm):
                     self.PROC_COUNT : self.inputs[self.PROC_COUNT],
                     "src" : self.outputs[self.STR_SRC]}
         
-        processing.run("TauDEM:streamdefinitionbythreshold", inputSet)
+        processing.run("TauDEM:streamdefinitionbythreshold", inputSet, feedback = feedback)
 
         return {self.STR_SRC : self.outputs[self.STR_SRC]}

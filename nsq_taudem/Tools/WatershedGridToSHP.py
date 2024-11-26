@@ -19,7 +19,6 @@ class StagedAlgorithm(Algorithm):
                                                                   description = "Watershed shapefile"))
 
     def processAlgorithm(self, parameters, context, feedback):
-        #TODO handle input error exceptions.
         watershedGrid = self.parameterAsRasterLayer(parameters, self.WATERHSED_GRID, context)
         watershedSHP = self.parameterAsOutputLayer(parameters, self.WATERSHED_SHP, context)
 
