@@ -13,8 +13,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterFileDestination,
                        QgsProcessingParameterEnum)
 
-#TODO consider refactoring the QGISParameters() method to call individual Parameter generation methods. Bonus: saves lines in the\
-#staged tools' scripts (wouldn't need to import the types for each one)
+#TODO consider rewriting QGSParmater() method to handle generation for both staged and non-staged tools. Saves LOC on staged tools' scripts.
 
 class Algorithm(QgsProcessingAlgorithm):
     PROC_COUNT = "proccount"
@@ -22,6 +21,8 @@ class Algorithm(QgsProcessingAlgorithm):
     def __init__(self, tool : Tool):
         super().__init__()
         self.tool = tool
+        self.inputs = {} #Currently used only by staged tools
+        self.outputs = {} #ditto
 
     def tr(self, string): #TODO implement this? Keeping it as useless pass-over because QGIS threw a fit when the method wasn't defined
         return string 
@@ -93,6 +94,42 @@ class Algorithm(QgsProcessingAlgorithm):
             return QgsProcessingParameterFileDestination(name = pIdName, description = pDispName)
         elif(pType == "l"): #list, only input
             return QgsProcessingParameterEnum(name = pIdName, description = pDispName, optional = param["isOptional"], defaultValue = 0, allowMultiple = False, options = param["list"].keys())
+
+
+    #TODO Unify EvaluateParameters() and EvaluateQGISInputParameter(). Will require to rewrite algorithm generator for non-staged tools and its command generator 
+    #EvaluateParameters() currently only used by staged tools
+    def EvaluateParameters(self, paramList, context,
+                           layerParams : list = None, floatParams : list = None, intParams : list = None, boolParams : list = None,
+                           outputLayers : list = None, outputFiles : list = None):
+        
+        if layerParams is not None:
+            for param in layerParams:
+                self.inputs[param] = Utilities.GetLayerAbsolutePath(self.parameterAsLayer(parameters = paramList, name = param, context = context))
+        
+        if boolParams is not None:
+            for param in boolParams:
+                self.inputs[param] = self.parameterAsBool(parameters = paramList, name = param, context = context)
+
+        if (floatParams is not None):
+            for param in floatParams:
+                self.inputs[param] = self.parameterAsDouble(parameters = paramList, name = param, context = context)
+
+        if (intParams is not None):
+            for param in intParams:
+                self.inputs[param] = self.parameterAsInt(parameters = paramList, name = param, context = context)
+
+        processCount = self.parameterAsInt(paramList, self.PROC_COUNT, context)
+        if processCount is not None:
+            self.inputs[self.PROC_COUNT] = processCount
+
+        if outputLayers is not None:
+            for param in outputLayers:
+                self.outputs[param] = self.parameterAsOutputLayer(paramList, param, context)
+
+        if outputFiles is not None:
+            for param in outputFiles:
+                self.outputs[param] = self.parameterAsFile(paramList, param, context)
+
 
     def EvaluateQGISInputParameter(self, param, paramList, context) -> list:
         pType = param["type"].lower()
