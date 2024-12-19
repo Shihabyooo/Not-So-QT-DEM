@@ -7,7 +7,7 @@ name=Not-So-QT-DEM
 qgisMinimumVersion=3.0
 qgisMaximumVersion=4.99
 description=TauDEM 5.3 processing provider
-version=0.1
+version=0.1.1
 author=Shihab E.
 email=hh9on4rqo@mozmail.com
 

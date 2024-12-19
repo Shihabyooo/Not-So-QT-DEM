@@ -38,13 +38,11 @@ class StagedAlgorithm(Algorithm):
         #Elevation Grid =r
         self.addParameter(QgsProcessingParameterRasterLayer(name = self.DEM,
                                                             description = "Elevation grid",
-                                                            optional = False,
-                                                            defaultValue = [QgsProcessing.TypeRaster]))
+                                                            optional = False))
         #D8 FLow Direction Grid = r
         self.addParameter(QgsProcessingParameterRasterLayer(name = self.FDR,
                                                             description = "D8 flow direction grid",
-                                                            optional = False,
-                                                            defaultValue = [QgsProcessing.TypeRaster]))
+                                                            optional = False))
         #Weight Center = 0.4f (default)
         self.addParameter(QgsProcessingParameterNumber(name = self.WCENTER,
                                                             description = "Weight center",
@@ -83,13 +81,11 @@ class StagedAlgorithm(Algorithm):
         # Mask Grid = (optional) = r 
         self.addParameter(QgsProcessingParameterRasterLayer(name = self.MASK,
                                                             description = "Mask grid",
-                                                            optional = True,
-                                                            defaultValue = [QgsProcessing.TypeRaster]))
+                                                            optional = True))
         # D8 conributing area (optional) = r
         self.addParameter(QgsProcessingParameterRasterLayer(name = self.D8_CONTRIB,
                                                             description = "D8 contributing area for drop analysis",
-                                                            optional = True,
-                                                            defaultValue = [QgsProcessing.TypeRaster]))
+                                                            optional = True))
         # Use the range below to automatically select threshold by drop analysis = False
         self.addParameter(QgsProcessingParameterBoolean(name = self.USE_THRESH,
                                                         description = "Use the range below to automatically select threshold by drop analysis",

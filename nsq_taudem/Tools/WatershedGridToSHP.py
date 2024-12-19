@@ -12,8 +12,7 @@ class StagedAlgorithm(Algorithm):
     def initAlgorithm(self, config=None):
         self.addParameter(QgsProcessingParameterRasterLayer(name = self.WATERHSED_GRID,
                                                             description = "Watershed grid",
-                                                            optional = False,
-                                                            defaultValue = [QgsProcessing.TypeRaster]))
+                                                            optional = False))
 
         self.addParameter(QgsProcessingParameterVectorDestination(name = self.WATERSHED_SHP,
                                                                   description = "Watershed shapefile"))

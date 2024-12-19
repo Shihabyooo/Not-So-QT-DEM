@@ -32,7 +32,7 @@ D8 Contributing Area,Basic Grid Analysis,AreaD8,,
 D8 flow direction grid,-p,r,0,
 Outlets,-o,v0,1,
 Weight grid,-wg,r,1,
-Check for edge contamination,-nc,b,0,0
+Check for edge contamination,-nc,b,0,1
 D8 contributing area grid,-ad8,r,,
 0,1,2,,
 D8 Flow Directions,Basic Grid Analysis,D8FlowDir,,
@@ -65,7 +65,7 @@ D-Infinity Contributing Area,Basic Grid Analysis,AreaDinf,,
 D-infinity flow direction grid,-ang,r,0,
 Outlets,-o,v0,1,
 Weight grid,-wg,r,1,
-Check for edge contamination,-nc,b,0,
+Check for edge contamination,-nc,b,0,1
 D-infinity specific catchment area grid,-sca,r,,
 0,1,2,,
 D-Infinity Flow Directions,Basic Grid Analysis,DinfFlowDir,,

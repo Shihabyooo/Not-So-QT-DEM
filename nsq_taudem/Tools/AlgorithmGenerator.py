@@ -87,7 +87,7 @@ class Algorithm(QgsProcessingAlgorithm):
             if isOuput:
                 return QgsProcessingParameterRasterDestination(name = pIdName, description = pDispName)
             else:
-                return QgsProcessingParameterRasterLayer(name = pIdName, description = pDispName, optional = param["isOptional"], defaultValue = [QgsProcessing.TypeRaster])
+                return QgsProcessingParameterRasterLayer(name = pIdName, description = pDispName, optional = param["isOptional"])
         elif pType in ["v0", "v1", "v2"]: #point, line or poly vec
             vecType = int(param["type"][1]) #0 = point, 1 = line, 2 = poly
             if isOuput:
@@ -158,6 +158,11 @@ class Algorithm(QgsProcessingAlgorithm):
                 evaluatedParam = str(evaluatedParam)
         elif pType == "b": #bools are special case, they don't have value to input, but they indicate whether the option is included in the command or not
             evaluatedParam = self.parameterAsBool(**args)
+            
+            #Special considerations for the -nc flag. We want it included only when bool is false (user opts not to check for edge contamination)
+            if param["option"].lower() == "-nc":
+                evaluatedParam = not evaluatedParam
+
             if evaluatedParam:
                 return [param["option"]]
             else:

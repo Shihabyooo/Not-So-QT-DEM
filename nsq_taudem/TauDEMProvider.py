@@ -36,7 +36,9 @@ class TauDEMProvider(QgsProcessingProvider):
         return True
 
     def unload(self):
-        ProcessingConfig.removeSetting("TAUDEM_PATH")        
+        ProcessingConfig.removeSetting("TAUDEM_PATH")
+        ProcessingConfig.removeSetting("USE_MPI")
+        ProcessingConfig.removeSetting("MPI_PATH")
 
     def loadAlgorithms(self):
         for tool in Utilities.ParseToolsDesc():
