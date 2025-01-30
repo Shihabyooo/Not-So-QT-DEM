@@ -2,7 +2,8 @@ from processing.core.ProcessingConfig import ProcessingConfig, Setting
 from qgis.core import QgsProcessingProvider, QgsApplication, QgsMessageLog, Qgis
 from .helpers import Utilities
 from .Tools import *
-import sys, os
+from sys import modules as sysModules
+from os import path as osPath
 
 class TauDEMProvider(QgsProcessingProvider):
 
@@ -33,6 +34,8 @@ class TauDEMProvider(QgsProcessingProvider):
         ProcessingConfig.readSettings()
         self.refreshAlgorithms()
         Utilities.SetPATH()
+        Utilities.SetProcessorCount()
+
         return True
 
     def unload(self):
@@ -45,10 +48,10 @@ class TauDEMProvider(QgsProcessingProvider):
             if tool.type == 0:
                 self.addAlgorithm(AlgorithmGenerator.Algorithm(tool))
             else:
-                moduleName = f"{os.path.basename(os.path.normpath(os.path.dirname(__file__)))}.Tools.{tool.exec[0:-3]}"
+                moduleName = f"{osPath.basename(osPath.normpath(osPath.dirname(__file__)))}.Tools.{tool.exec[0:-3]}"
                 
-                if moduleName in sys.modules:
-                    module = sys.modules[moduleName]
+                if moduleName in sysModules:
+                    module = sysModules[moduleName]
                     self.addAlgorithm(module.StagedAlgorithm(tool))
 
     def id(self):

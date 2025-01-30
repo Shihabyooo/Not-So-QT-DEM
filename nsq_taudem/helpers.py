@@ -1,8 +1,9 @@
-import os
-import csv
-import subprocess
+from os import path as osPath, environ as osEnviron
+from csv import reader as csvReader
+from subprocess import Popen, PIPE, STDOUT
 from itertools import islice
 from platform import uname
+from multiprocessing import cpu_count
 
 from processing.core.ProcessingConfig import ProcessingConfig
 from qgis.core import (Qgis,
@@ -29,10 +30,11 @@ class Tool():
 class Utilities():
     DEFAULT_TAUDEM_PATH = "C:/Program Files/TauDEM/TauDEM5Exe/" #default for TauDEM 5.3 installer
     DEFAULT_MPI_PATH = "C:/Program Files/Microsoft MPI/Bin/" 
-    
+    DEFAULT_PROCESSOR_COUNT = 4
+
     @staticmethod
     def IsValidDir(path : str) -> bool:
-        return os.path.isdir(path)
+        return osPath.isdir(path)
 
     @staticmethod
     def FetchPath(settingName : str, default = "") -> str: #for directories set in settings.
@@ -62,15 +64,15 @@ class Utilities():
 
     @staticmethod
     def DescriptionFilePath() -> str:
-        return os.path.dirname(__file__) + "/TauDEMToolsDesc.csv"
+        return osPath.dirname(__file__) + "/TauDEMToolsDesc.csv"
     
     @staticmethod
     def HelpTextFilePath(toolName : str) -> str:
-        return os.path.dirname(__file__) + "/HelpTexts/" + toolName + ".txt"
+        return osPath.dirname(__file__) + "/HelpTexts/" + toolName + ".txt"
     
     @staticmethod
     def ImageDirPath()->str:
-        return os.path.dirname(__file__) + "/img/"
+        return osPath.dirname(__file__) + "/img/"
 
     @staticmethod
     def GetIcon() -> QIcon:
@@ -85,16 +87,20 @@ class Utilities():
         #add only what's missing. Shouldn't be serious requirment for actual use, but multiple reloading and unloading of this plugin (like what happens in \
         #testing or enabling/disabling via plugins dialogue) with the "naive" implementation will end up with duplicates in PATH var for the QGIS session. 
         #Naive implementation:
-        #os.environ["PATH"] += ";".join([Utilities.TauDEMPath(), Utilities.MPIPath(), Utilities.GDALPath()])
+        #osEnviron["PATH"] += ";".join([Utilities.TauDEMPath(), Utilities.MPIPath(), Utilities.GDALPath()])
         
-        if not os.environ["PATH"].endswith(";"): #not guaranteed. We could just force adding the ";" before requirePaths bellow, but i'd rather avoid having double ;; 
-            os.environ["PATH"] += ";"
+        if not osEnviron["PATH"].endswith(";"): #not guaranteed. We could just force adding the ";" before requirePaths bellow, but i'd rather avoid having double ;; 
+            osEnviron["PATH"] += ";"
 
-        pathVars = os.environ["PATH"].split(";")
+        pathVars = osEnviron["PATH"].split(";")
         for requiredPath in [Utilities.TauDEMPath(), Utilities.MPIPath(), Utilities.GDALPath()]:
             if requiredPath not in pathVars:
-                os.environ["PATH"] += requiredPath + ";"
-        
+                osEnviron["PATH"] += requiredPath + ";"
+    
+    @staticmethod
+    def SetProcessorCount() -> None:
+        Utilities.DEFAULT_PROCESSOR_COUNT = cpu_count()
+
     @staticmethod
     def SanitizeString(string : str) -> str: #returns a string with only lowercase, alphanumeric ASCII characters, no spaces, no special chars (although QGIS didn't object to hyphens)
         legalCharset = "abcdefghijklmnopqrstuvwxyz123456789"
@@ -124,7 +130,7 @@ class Utilities():
             QgsMessageLog.logMessage(f"Failed to open file: \"{Utilities.DescriptionFilePath()}\". Exception thrown: {str(exception)}", level=Qgis.Critical, notifyUser = False)
             return tools
             
-        descFileParser = csv.reader(descFile, delimiter= ",", quotechar = "\"")
+        descFileParser = csvReader(descFile, delimiter= ",", quotechar = "\"")
     
         next(islice(descFileParser, 4, None)) #skip to start of first tool desc 
         
@@ -266,10 +272,10 @@ class Utilities():
         feedback.pushInfo(f"Executing shell command: {command}")
 
         #TODO implement process cancelling
-        with subprocess.Popen(  command,
+        with Popen(  command,
                                 shell=True,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
+                                stdout=PIPE,
+                                stderr=STDOUT,
                                 universal_newlines=True) as process:
             try:
                 for output in iter(process.stdout.readline, ''):

@@ -181,7 +181,7 @@ class Algorithm(QgsProcessingAlgorithm):
         return [param["option"], evaluatedParam]
 
     def AddProcessCountInputParam(self):
-        self.addParameter(QgsProcessingParameterNumber(name = self.PROC_COUNT, description = "Number of processes to use (Requires MPI enabled)", optional = False, defaultValue = 4, type = QgsProcessingParameterNumber.Integer))
+        self.addParameter(QgsProcessingParameterNumber(name = self.PROC_COUNT, description = "Number of processes to use (Requires MPI enabled)", optional = False, defaultValue = Utilities.DEFAULT_PROCESSOR_COUNT, type = QgsProcessingParameterNumber.Integer))
 
     def initAlgorithm(self, config=None):
         for input in self.tool.inputParams:
