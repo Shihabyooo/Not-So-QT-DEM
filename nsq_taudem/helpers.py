@@ -11,9 +11,6 @@ from qgis.core import (Qgis,
                        QgsProcessingFeedback)
 from qgis.PyQt.QtGui import QIcon
 
-#TODO (check again if this is a requirement) create a utility that converts non-supported vector formats to shp 
-#TauDEM docs state they accept all raster formats supported by GDAL, so we don't need to manipulte them(?)
-
 class Tool():
     def __init__(self):
         self.type = 0 #0 for non-staged (calls a single TauDEM exec), 1 for complicated tools
@@ -31,6 +28,14 @@ class Utilities():
     DEFAULT_TAUDEM_PATH = "C:/Program Files/TauDEM/TauDEM5Exe/" #default for TauDEM 5.3 installer
     DEFAULT_MPI_PATH = "C:/Program Files/Microsoft MPI/Bin/" 
     DEFAULT_PROCESSOR_COUNT = 4
+
+    @staticmethod
+    def CheckSupportedPlaform() -> []: #[isSupported : boolean, platformName : str]
+        platform = uname().system.lower()
+        isSupported = False
+        if platform == "windows":
+            isSupported = True
+        return [isSupported, platform]
 
     @staticmethod
     def IsValidDir(path : str) -> bool:
@@ -238,25 +243,26 @@ class Utilities():
     #TODO consider disabling MPI if mpiProcessCount is set to 1
     @staticmethod
     def GetPlatformSpecificCommand(command : str, mpiProcessCount : int) -> str:
-        platform = uname().system.lower()
+        
+        platformSupportStatus = Utilities.CheckSupportedPlaform()
+        if not platformSupportStatus[0]:
+            return ""
+
         useMPI = ProcessingConfig.getSetting("USE_MPI")
         
-        if platform == "windows": #use Microsoft's MPI (if enabled) and prepend "cmd.exe /C " to the command
+        if platformSupportStatus[1] == "windows": #use Microsoft's MPI (if enabled) and prepend "cmd.exe /C " to the command
             if useMPI:
                  command = "mpiexec -n " + str(mpiProcessCount) + " " + command
             return "cmd.exe /C " + Utilities.WrapInQuotes(command)
-        elif platform == "linux": #TODO implement
+        elif platformSupportStatus[1] == "linux": #TODO implement
             if useMPI:
                 pass
-            feedback.pushInfo(f"ERROR! Linux support is not finalized yet.")
             return ""
-        elif platform == "darwin": #Anyone willing to shell out $$$ on Apple's overpriced walled garden is welcome to implement and test this...
+        elif platformSupportStatus[1] == "darwin": #Anyone willing to shell out $$$ on Apple's overpriced walled garden is welcome to implement and test this...
             if useMPI:
                 pass
-            feedback.pushInfo(f"ERROR! MacOS is not supported.")
             return ""
         else: #Shouldn't -practically- happen, but still.
-            feedback.pushInfo(f"Error! Can't determine running platform. Found: {platform}. Expected: windows, linux, or darwin.")
             return ""
 
     @staticmethod
@@ -265,10 +271,12 @@ class Utilities():
         if mpiProcessCount < 1:
             feedback.pushInfo(f"Warning: Invalid process count value {mpiProcessCount}. Setting to 1")
             mpiProcessCount = max(1, mpiProcessCount)
-        
-        #command = "cmd.exe /C " + Utilities.WrapInQuotes(command)
-        command = Utilities.GetPlatformSpecificCommand(command, mpiProcessCount)
 
+        command = Utilities.GetPlatformSpecificCommand(command, mpiProcessCount)
+        if command == "": #should happen only with unsupported system.
+            feedback.reportError("Error! This operating system is not supported by this plugin.", True)
+            return
+        
         feedback.pushInfo(f"Executing shell command: {command}")
 
         #TODO implement process cancelling

@@ -7,7 +7,7 @@ name=Not-So-QT-DEM
 qgisMinimumVersion=3.0
 qgisMaximumVersion=4.99
 description=TauDEM 5.3 processing provider
-version=0.1.1
+version=0.1.2
 author=Shihab E.
 email=hh9on4rqo@mozmail.com
 
@@ -21,7 +21,7 @@ repository=https://github.com/Shihabyooo/Not-So-QT-DEM
 
 hasProcessingProvider=yes
 # Uncomment the following line and add your changelog:
-# changelog=
+changelog= 0.1.2 Bug fixes for plugin init, minor changes.
 
 # Tags are comma separated with spaces allowed
 tags=python,processing,taudem,hydrology,watershed analysis,terrain analysis

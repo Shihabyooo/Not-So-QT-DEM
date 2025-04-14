@@ -2,9 +2,10 @@ import os
 import sys
 import inspect
 
-from qgis.core import QgsProcessingAlgorithm, QgsApplication
+from qgis.core import QgsApplication, QgsMessageLog, Qgis
 
 from .TauDEMProvider import TauDEMProvider
+from .helpers import Utilities
 
 cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 
@@ -19,6 +20,9 @@ class TauDEMPlugin(object):
 
     def initProcessing(self):
         """Init Processing provider for QGIS >= 3.8."""
+        platformSupportStatus = Utilities.CheckSupportedPlaform()
+        if not platformSupportStatus[0]:
+            QgsMessageLog.logMessage(f"Error! This operating system \"{platformSupportStatus[1]}\" is not supported!", level=Qgis.Critical, notifyUser = True)
         self.provider = TauDEMProvider()
         QgsApplication.processingRegistry().addProvider(self.provider)
 

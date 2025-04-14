@@ -1,7 +1,8 @@
 from processing.core.ProcessingConfig import ProcessingConfig, Setting
 from qgis.core import QgsProcessingProvider, QgsApplication, QgsMessageLog, Qgis
 from .helpers import Utilities
-from .Tools import *
+#from .Tools import *
+from .Tools import AlgorithmGenerator, CreateParameterRegionGrid, PeukerDouglasStreamDefinition, SlopeAreaStreamDef, WatershedGridToSHP
 from sys import modules as sysModules
 from os import path as osPath
 
@@ -12,6 +13,12 @@ class TauDEMProvider(QgsProcessingProvider):
 
     
     def load(self):
+
+        platformSupportStatus = Utilities.CheckSupportedPlaform()
+        if not platformSupportStatus[0]:
+            QgsMessageLog.logMessage(f"Error! This operating system \"{platformSupportStatus[1]}\" is not supported!", level=Qgis.Critical, notifyUser = True)
+            return False
+
         ProcessingConfig.settingIcons["TauDEM"] = self.icon() 
 
         ProcessingConfig.addSetting(Setting("TauDEM", #group
