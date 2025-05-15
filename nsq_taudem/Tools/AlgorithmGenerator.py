@@ -194,7 +194,7 @@ class Algorithm(QgsProcessingAlgorithm):
             self.addParameter(self.QGISParameter(output, True))
 
     def processAlgorithm(self, parameters, context, feedback):
-        feedback.pushInfo(f"Starting processing of tool {self.tool.displayName}") #test
+        # feedback.pushInfo(f"Starting processing of tool {self.tool.displayName}") #test
         results = {}
         command = []
         command.append(Utilities.WrapInQuotes(Utilities.TauDEMPath() + self.tool.exec))
@@ -206,7 +206,7 @@ class Algorithm(QgsProcessingAlgorithm):
                 if input["isOptional"]: #optional input can be none if the user elects not to use them. in this case just skip to next input
                     continue
                 else: #this is an error. required input can't be none unless something is wrong with fetching it.
-                    feedback.pushInfo(f"Error evluating parameters for {input["desc"]}")#test
+                    #feedback.pushInfo(f"Error evluating parameters for {input["desc"]}")#test
                     raise QgsProcessingException(self.invalidSourceError(parameters, input["option"][1:]))
             
             command += evaluatedParam
